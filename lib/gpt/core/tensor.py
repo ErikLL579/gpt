@@ -91,7 +91,7 @@ class tensor(foundation_base):
 
     def reduced(self):
         if self.otype.data_otype() == gpt.ot_singlet:
-            return complex(self.array)
+            return complex(self.array.item())
         return self
 
     def trace(self, t):
@@ -108,7 +108,7 @@ class tensor(foundation_base):
                 res = tensor(np.trace(res.array, offset=0, axis1=ct[0], axis2=ct[1]), ct[2]())
 
         if isinstance(res.otype, gpt.ot_singlet):
-            res = complex(res.array)
+            res = complex(res.array.item())
         return res
 
     def norm2(self):

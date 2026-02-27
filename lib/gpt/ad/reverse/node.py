@@ -175,9 +175,11 @@ class node_base(base):
         # not allowed to capture z, otherwise have reference loop!
         def _backward(z):
             if x.with_gradient:
-                x.gradient += z.gradient * g.adj(y.value)
+                # x.gradient += z.gradient * g.adj(y.value)
+                x.gradient += z.gradient * g.eval(g.adj(y.value))
             if y.with_gradient:
-                y.gradient += g.adj(x.value) * z.gradient
+                # y.gradient += g.adj(x.value) * z.gradient
+                y.gradient += g.eval(g.adj(x.value)) * z.gradient
 
         return node_base(_forward, _backward, (x, y), _container=z_container, _tag="*")
 

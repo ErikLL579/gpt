@@ -54,7 +54,7 @@ def to_num(x):
 def value_to_tensor(val, otype):
     if isinstance(otype.data_otype(), gpt.ot_singlet):
         # this is not ideal, can we do a subclass of complex that preserves otype info?
-        return complex(val)
+        return complex(val.item()) if isinstance(val, np.ndarray) else complex(val)
     return gpt.tensor(val, otype)
 
 
