@@ -32,6 +32,7 @@ HMC in gauge-fixed variables using GPT's automatic differentiation and `differen
 - `multi_step_AD.py` — 2D (4x4) gauge-fixed HMC, masking commented out. 1000 trajectories.
 - `Gauge-fixing-FT-code-autodiff.py` — 4D (4^4) version with checkerboard masking code (has issues, see below).
 - `claude_multi_step_AD.py` — 2D (8x8) with working checkerboard masking via group-typed mask trick (see below). 5 trajectories.
+- `AD_multi_step.py` — **Multi-step** 4D (4^4) gauge-fixing HMC with N sequential transformations, Luscher backward recursion for force propagation, configurable checkerboard masking. See below for details.
 
 **Notebooks (progression of experiments):**
 - `AD_gfft_HMC_normal.ipynb` — Baseline: standard 2D HMC without gauge transformation (control)
@@ -49,6 +50,36 @@ dfm = dft.diffeomorphism()         # Get diffeomorphism object
 a_log_det = dft.action_log_det_jacobian()  # Log-det Jacobian as action
 # HMC Hamiltonian: H = S_gauge(Vgf) + S_mom(P) + S_logdet(Vgf, mom)
 ```
+
+### Multi-Step Gauge-Fixing (`AD_multi_step.py`)
+
+Generalizes single-step to N sequential gauge-fixing transformations based on Luscher's trivializing maps (arXiv:0907.5491, eq. 6.5). Reference PDF: `luscher-TM.pdf`.
+
+**Transformation chain:** W → V_1 = K_0(W) → V_2 = K_1(V_1) → ... → U = K_{N-1}(V_{N-1})
+- W is the dynamical variable (updated by symplectic integrator)
+- Gauge action S_gauge evaluated directly on W (gauge-invariant, no chain rule needed)
+- Each step k contributes S_logdet_k with its own independent stochastic momentum
+
+**Transformation factory pattern** (replaces global `num_steps` side effect):
+```python
+def make_ft(grid, nd, eps, checkerboard=None):
+    # Precomputes group-typed mask in closure
+    # Returns ft(U) that works on both plain fields and AD nodes
+    # checkerboard=None disables masking; g.even/g.odd enables it
+```
+
+**Force propagation (Luscher backward recursion, O(N)):**
+```python
+F = a_log_det_list[-1].gradient(V[-2] + mom2[-1], V[-2])  # outermost
+for k in range(n_gf_steps - 2, -1, -1):
+    F = dfm_list[k].jacobian(V[k], V[k+1], F)   # pullback through step k
+    F_local = a_log_det_list[k].gradient(V[k] + mom2[k], V[k])
+    F = [g(F[mu] + F_local[mu]) for mu in range(nd)]
+```
+
+**Key insight:** `dfm.jacobian(V_k, V_{k+1}, F)` computes J_k^T · F (pullback via reverse-mode AD), which is exactly the force propagation in Luscher eq. 6.5.
+
+**Parameters** (configurable at top of file): `n_gf_steps`, `use_masking`, `eps_gf`, `beta`, `L`, `nd`, `tau`, `n_md_steps`, `n_trajs`.
 
 ## GPT Quick Reference
 

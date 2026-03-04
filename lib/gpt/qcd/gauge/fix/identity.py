@@ -28,3 +28,51 @@ def identity(U, mu=3):
     for n in range(N - 1):
         V_n.append(g(V_n[n] * U_n[n]))
     return g.merge(V_n, mu)
+
+def tree(U, origin, dimensions):
+    E = g.identity(U[0])
+    V = g.lattice(U[0])
+    V[:] = 0
+    V[tuple(origin)] = E[tuple(origin)]
+    L = V.grid.gdimensions
+
+    for mu in dimensions:
+        V0 = g.copy(V)
+        U_mu_shift = g.cshift(U[mu], mu, -1)
+        for step in range(L[mu] - 1):
+            V0 @= g.cshift(V0, mu, -1) * U_mu_shift
+            V += V0
+    return V
+
+# set identical tree gauges in subvolumes of the lattice
+def sub_volume_tree(U, block_size, dimensions):
+    E = g.identity(U[0])
+    V = g.lattice(U[0])
+    V[:] = 0
+    
+
+    # coordinates for local blocks
+    domain_even = g.domain.even_odd_blocks(grid, [block_size for i in range(grid.nd)], g.even)
+    domain_odd = g.domain.even_odd_blocks(grid, [block_size for i in range(grid.nd)], g.odd)
+    vol = domain_even.block_volume
+    
+    # set origins for subvolume blocks to identity
+    for i in range(len(domain_even.gcoor)//vol ):
+        dom = domain_even.gcoor[i*vol: (i+1)*vol]
+        V[dom[0]] = E[dom[0]]
+        #print(dom[0])
+    for j in range(len(domain_odd.gcoor)//vol ):
+        dom = domain_odd.gcoor[j*vol: (j+1)*vol]
+        V[dom[0]] = E[dom[0]]
+        #print(dom[0])
+    
+    L = [block_size for i in range(grid.nd)]
+
+    for mu in dimensions:
+        V0 = g.copy(V)
+        U_mu_shift = g.cshift(U[mu], mu, -1)
+        for step in range(L[mu] - 1):
+            V0 @= g.cshift(V0, mu, -1) * U_mu_shift
+            V += V0
+        
+    return V

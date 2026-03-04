@@ -7,6 +7,7 @@ Implement checkerboard-masked gauge-fixing field transformation using GPT's auto
 - `claude_multi_step_AD.py` — 2D (8x8) with checkerboard masking working. Runs HMC trajectories (overflow on traj 2, likely numerical tuning needed).
 - `Trying_AD.py` / `multi_step_AD.py` — 2D versions with masking commented out, run fine
 - `Gauge-fixing-FT-code-autodiff.py` — 4D version with masking, has the same otype issues (fixable with the approach below)
+- `AD_multi_step.py` — **Multi-step** 4D (4^4) with N sequential gauge-fixing steps. Uses Luscher backward recursion (eq. 6.5 of arXiv:0907.5491) for O(N) force propagation. Configurable: `n_gf_steps`, `use_masking`, `eps_gf`, etc. Status: untested as of Feb 2025, deployed to remote server for first run.
 
 ## The Masking Solution
 
@@ -48,6 +49,19 @@ y.gradient += g.eval(g.adj(x.value)) * z.gradient
 - `fourier_kernel.py`, `fourier_hmc.py` — Fourier acceleration kernel (copied from RWGFFA)
 - `Gauge_fixing_for_GFFA.pdf` — Main algorithm document
 - `Gauge_fixing_for_GFFA_all_left_invariant_basis.pdf` — Companion doc (Jacobian in left-invariant basis)
+- `luscher-TM.pdf` — Luscher "Trivializing maps" (arXiv:0907.5491), basis for multi-step force recursion
+
+## Multi-Step Architecture (`AD_multi_step.py`)
+
+**Chain:** W → V_1 = K_0(W) → V_2 = K_1(V_1) → ... → U = K_{N-1}(V_{N-1})
+
+**Key design choices:**
+- `make_ft(grid, nd, eps, checkerboard)` factory replaces global `num_steps` side effect. Precomputes group-typed mask in closure.
+- N independent `differentiable_field_transformation` objects, one per step, with alternating even/odd checkerboard masks
+- Gauge action evaluated on W directly (gauge-invariant → no chain rule needed)
+- Each step has independent stochastic momentum for log-det estimator
+- Force propagation via Luscher backward recursion: `F = J_k^T · F + dS_logdet_k/dV_k`, using `dfm.jacobian()` for pullback (reverse-mode AD computes J^T · v)
+- Inverse chain: `dft_list[k].inverse()` applied in reverse order to recover W from U
 
 ## Bug fixes applied
 - `lib/gpt/core/basis.py` line 46: NumPy 2.x fix for `complex(x)` → `complex(x.item()) if hasattr(x, 'item') else complex(x)`
