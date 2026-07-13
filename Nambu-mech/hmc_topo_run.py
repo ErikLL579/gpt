@@ -90,12 +90,14 @@ if it0 == 0:
     )
 
 history = []
+n_acc = 0
 t0 = time.time()
 for i in range(it0, n_traj):
     history += [hmc(tau)]
+    n_acc += history[-1][0]
     g.message(
         f"Trajectory {i}: plaquette = {g.qcd.gauge.plaquette(U):.6f}, "
-        f"dH = {history[-1][1]:+.4e}, accept = {int(history[-1][0])}"
+        f"dH = {history[-1][1]:+.4e}, accept = {n_acc / len(history):.3f}"
     )
     if i % n_meas == 0:
         m = flow_and_measure(U, t_flow, eps_flow)
