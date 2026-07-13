@@ -10,6 +10,7 @@ GPT is a Python library for lattice QCD built on top of Grid. This is a local de
 - `tests/` - Test suite
 - `scripts/bootstrap/` - Build scripts for different platforms
 - `erik_tests/` - Erik's research code and experiments
+- `Nambu-mech/` - Nambu HMC implementation (Erik's paper arXiv:2409.18958)
 
 ## Erik's Research Projects
 
@@ -80,6 +81,58 @@ for k in range(n_gf_steps - 2, -1, -1):
 **Key insight:** `dfm.jacobian(V_k, V_{k+1}, F)` computes J_k^T · F (pullback via reverse-mode AD), which is exactly the force propagation in Luscher eq. 6.5.
 
 **Parameters** (configurable at top of file): `n_gf_steps`, `use_masking`, `eps_gf`, `beta`, `L`, `nd`, `tau`, `n_md_steps`, `n_trajs`.
+
+### Nambu HMC (Generalized HMC using Nambu Mechanics)
+Location: `Nambu-mech/`
+
+Implementation of Erik's paper "Generalized HMC using Nambu mechanics for lattice QCD" (arXiv:2409.18958, PDF in the directory). Each link carries a triplet {U, p, r}; Metropolis accepts on H = Σp²/2 + Σr²/2 + S_β(U) while a second Hamiltonian G drives the dynamics but never enters the measure. G must be even in p (reversibility: flip p only) and differentiable, but need NOT be gauge invariant, local, or physical.
+
+**Equations of motion** for G = c_p Σp²/2 + c_r Σr²/2 + g₃(U), with F_H = ∂S_β, F_G = ∂g₃ (both algebra-valued forces) and a∘b the componentwise product in the adjoint index:
+```
+U̇ = (c_r − c_p) p∘r
+frc_P = (c_r·F_H − F_G)∘R      # update_p convention: dst ← dst − ε·frc
+frc_R = (F_G − c_p·F_H)∘P
+```
+Constraints: c_p ≠ c_r, and neither may equal the coefficient of S_β inside G. Production choice: c_p = 0.75, c_r = 1.5.
+
+**Integrator (PRURP, paper eq. 19)** — nested GPT leapfrogs, no new integrator code:
+```python
+mdint = sympl.leap_frog(N, ip_P, sympl.leap_frog(1, ip_R, iq_U))
+```
+
+**Componentwise adjoint product** — no explicit generator matrices; decompose via `otype.coordinates()` (su_n.py), multiply the 8 coefficient fields, reassemble (`cw_list` in the markov scripts).
+
+**Forces for arbitrary G via reverse-mode AD** — wrap U in AD nodes, build a scalar graph, get a `differentiable_functional` with the same interface as `action.gradient(U, U)`:
+```python
+from gpt.ad import reverse as rad
+aU = [rad.node(g.copy(u)) for u in U]
+q_func = g.qcd.gauge.differentiable_topology(aU).functional(*aU)  # G = κ·Q
+F_G = q_func.gradient(U, U)   # algebra-typed, auto-projected
+```
+
+**5D OBC scaffold** (`nambu_obc5d_*.py`): each 4D link U_μ(x) is coupled through G to a μ5-plaquette rung S5 = Σ Re Tr[U_μ(x) V₅(x+μ) W_μ†(x) V₅†(x)] with vertical links V₅ and an edge layer W — no wrap-around term, so genuinely open in the fictitious 5th direction. V, W carry NO weight in H, so the 4D marginal is exactly e^(−S_β) for any κ₅ (Haar integration factorizes); they are refreshed each trajectory by an exact Haar draw (Gibbs step). All 9 link species (4 U + V + 4 W) run as one big list through the unmodified GPT machinery (`update_p`/`update_q`/`metropolis` all accept field lists). Note: `rng.element` is NOT Haar — use QR of a complex Gaussian with column-phase fix and det^(1/3) projection (`haar_su3` in the scripts). Frozen scaffold would be a Dirichlet wall, and W≡1 collapses to a Landau-gauge functional — W must be dynamical for real OBC.
+
+**Files:**
+- `nambu_hmc.py` — first implementation + frozen-r limit check (reproduces standard HMC to 2.5e-16)
+- `nambu_markov.py` / `standard_hmc.py` — λS-in-G Markov chain and HMC baseline (4⁴, β=1, τ=2)
+- `nambu_topo_scaling.py` / `nambu_topo_markov.py` — G = κ·Q (topological charge, κ=10) scaling + chain
+- `nambu_obc5d_scaling.py` / `nambu_obc5d_markov.py` — 5D OBC scaffold scaling + chain (κ₅=1, N=10)
+- `compare_plaquette.py` — binned drop-one-bin jackknife comparison with bin-size sweep (`python3 compare_plaquette.py log1 log2 16`)
+- `hmc_topo_run.py` / `nambu_obc5d_topo_run.py` — production runs for the topological-tunneling comparison (β=6, 8⁴ defaults; Wilson-flowed Q5LI/Qclover/E each trajectory; NERSC checkpoints + auto-resume; tune `--nsteps` on the target machine to 65–85% acceptance)
+- `topo_measure.py` — shared flow+measure+checkpoint helpers
+- `tau_int.py` — Madras–Sokal τ_int with automatic windowing, tunneling rate, Q-integerness (`python3 tau_int.py hmc.log nhmc.log`)
+- Logs: `hmc_1k.log`, `nambu_1k.log`, `nambu_topo_1k.log`, `nambu_obc5d_1k.log`
+
+**Validation results** (4⁴, β=1.0, τ=2, 1000 trajectories each, bin-16 jackknife):
+- Reversibility ~1e-15 and ΔH, ΔG ~ ε² scaling for all three G choices
+- ⟨plaq⟩: HMC 0.059907(350); Nambu λS-G 0.060243(318) (0.71σ); Nambu κQ-G 0.059484(319) (0.90σ); Nambu 5D-OBC 0.059912(328) (0.01σ)
+- Acceptance tuned to 65–85% window in all chains to expose detailed-balance violations
+
+**Gotchas:**
+- Cold-start Metropolis locks up (dH ~ +27 from unit config, rejects forever) — thermalize with `accept_reject=False`
+- `g.qcd.gauge.smear.wilson_flow(U, eps)` is ONE RK4 step; loop t/eps times for flow time t; keep flow radius √(8t) ≲ L/4
+- `g.qcd.gauge.energy_density(U)` returns complex — take `.real`
+- β=1 on 4⁴ shows no topological freezing (τ_int ≈ 1.4); the tunneling comparison needs β≈6
 
 ## GPT Quick Reference
 
