@@ -117,6 +117,7 @@ F_G = q_func.gradient(U, U)   # algebra-typed, auto-projected
 - `nambu_markov.py` / `standard_hmc.py` — λS-in-G Markov chain and HMC baseline (4⁴, β=1, τ=2)
 - `nambu_topo_scaling.py` / `nambu_topo_markov.py` — G = κ·Q (topological charge, κ=10) scaling + chain
 - `nambu_obc5d_scaling.py` / `nambu_obc5d_markov.py` — 5D OBC scaffold scaling + chain (κ₅=1, N=10)
+- `nambu_obc5d_linear_scaling.py` / `nambu_obc5d_linear_topo_run.py` — 5D OBC variant with G **linear in r** (paper eq. 30 form): G = γ·Σr_a + κ₅·S5. EOM: U̇ = γp (plain, no p∘r), frc_P = γF_S − κ₅F_G∘r, frc_R = κ₅F_G∘p. γ=1, κ₅=0 reduces exactly to standard HMC ("minimal deformation"). Flags: --gamma replaces --c_p/--c_r. Scaling test passed July 15 2026 (reversibility ~1.7e-15, dH~ε^1.99, dG~ε^2.00)
 - `compare_plaquette.py` — binned drop-one-bin jackknife comparison with bin-size sweep (`python3 compare_plaquette.py log1 log2 16`)
 - `hmc_topo_run.py` / `nambu_obc5d_topo_run.py` — production runs for the topological-tunneling comparison (β=6, 8⁴ defaults; Wilson-flowed Q5LI/Qclover/E each trajectory; NERSC checkpoints + auto-resume; tune `--nsteps` on the target machine to 65–85% acceptance)
 - `topo_measure.py` — shared flow+measure+checkpoint helpers
