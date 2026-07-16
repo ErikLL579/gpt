@@ -1,0 +1,88 @@
+SharedMemoryNone: SharedMemoryAllocate 1073741824 GPU implementation 
+0SharedMemoryNone:  SharedMemoryNone.cc acceleratorAllocDevice 1073741824bytes at 0x300000000 for comms buffers 
+
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|_ |  |  |  |  |  |  |  |  |  |  |  | _|__
+__|_                                    _|__
+__|_   GGGG    RRRR    III    DDDD      _|__
+__|_  G        R   R    I     D   D     _|__
+__|_  G        R   R    I     D    D    _|__
+__|_  G  GG    RRRR     I     D    D    _|__
+__|_  G   G    R  R     I     D   D     _|__
+__|_   GGGG    R   R   III    DDDD      _|__
+__|_                                    _|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+  |  |  |  |  |  |  |  |  |  |  |  |  |  |  
+
+
+Copyright (C) 2015 Peter Boyle, Azusa Yamaguchi, Guido Cossu, Antonin Portelli and other authors
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+Current Grid git commit hash=e138258129faed5cb12fc0e5bbf829f69c6a2a3d: (HEAD -> feature/gpt, origin/feature/gpt, origin/HEAD) uncommited changes
+
+Grid : Message : ================================================ 
+Grid : Message : MPI is initialised and logging filters activated 
+Grid : Message : ================================================ 
+Grid : Message : This rank is running on host Eriks-MacBook-Pro-7.local
+Grid : Message : Requested 1073741824 byte stencil comms buffers 
+Grid : Message : MemoryManager::Init() setting up
+Grid : Message : MemoryManager::Init() cache pool for recent host   allocations: SMALL 8 LARGE 2 HUGE 0
+Grid : Message : MemoryManager::Init() cache pool for recent device allocations: SMALL 16 LARGE 8 Huge 0
+Grid : Message : MemoryManager::Init() cache pool for recent shared allocations: SMALL 16 LARGE 8 Huge 0
+Grid : Message : MemoryManager::Init() Unified memory space
+
+=============================================
+              Initialized GPT                
+     Copyright (C) 2020 Christoph Lehner     
+=============================================
+GPT :       0.318951 s : Initializing gpt.random(nambu-smq-linear-test,vectorized_ranlux24_389_64) took 0.000125885 s
+GPT :       0.318979 s : 
+                       : Nambu HMC with smeared-Q in G (linear in r): scaling test
+                       :   lattice = [4, 4, 4, 4]
+                       :   beta    = 1.0
+                       :   gamma   = 1.0
+                       :   kappa   = 10.0
+                       :   rho     = 0.12, n_sm = 2
+                       :   tau     = 1.0
+                       : 
+GPT :       0.332776 s : ======================================================================
+GPT :       0.332790 s : Test 0: smeared-Q value and gradient through the stout chain rule
+GPT :       1.655430 s :   Q_5LI (raw links)        = 0.469311
+GPT :       1.678913 s :   Q_sm  (clover, 2 stout) = 0.041452
+GPT :       1.703444 s : Test that functional is real: 0.0
+GPT :       1.914714 s : Assert gradient error: 1.462938671436566e-10 < 1e-07
+GPT :       1.916744 s : Test 0 passed
+GPT :       1.916763 s : ======================================================================
+GPT :       1.916769 s : Thermalizing 20 standard HMC trajectories at beta = 1.0
+GPT :       4.885107 s : Thermalized: plaquette = 0.052469
+GPT :       4.885290 s : ======================================================================
+GPT :       4.885304 s : Test 1: reversibility of PRURP with smeared-Q linear-in-r G
+GPT :      21.774760 s :   reversibility error: U = 1.31e-15, P = 6.22e-16, R = 3.50e-16
+GPT :      21.774996 s : Test 1 passed
+GPT :      21.775008 s : ======================================================================
+GPT :      21.775033 s : Test 2: |dH|, |dG| vs eps at fixed trajectory length
+GPT :      28.763392 s :   N =   5  eps = 0.2000   |dH| = 3.532833e-01   |dG| = 2.190047e-02
+GPT :      41.782135 s :   N =  10  eps = 0.1000   |dH| = 1.044379e-01   |dG| = 6.222954e-03
+GPT :      67.181670 s :   N =  20  eps = 0.0500   |dH| = 2.709776e-02   |dG| = 1.584494e-03
+GPT :     117.212291 s :   N =  40  eps = 0.0250   |dH| = 6.835915e-03   |dG| = 3.979709e-04
+GPT :     217.087287 s :   N =  80  eps = 0.0125   |dH| = 1.712817e-03   |dG| = 9.960860e-05
+GPT :     217.087423 s :   fitted slope: dH ~ eps^1.978, dG ~ eps^1.989  (expect 2)
+GPT :     217.087434 s : Test 2 passed
+GPT :     217.087441 s : ======================================================================
+GPT :     217.087446 s : All tests passed
+=============================================
+               Finalized GPT                 
+=============================================
+Grid : Message : 216.808400 s : *******************************************
+Grid : Message : 216.808406 s : ******* Grid Finalize                ******
+Grid : Message : 216.808409 s : *******************************************
