@@ -1,0 +1,102 @@
+SharedMemoryMpi:  World communicator of size 1
+SharedMemoryMpi:  Node  communicator of size 1
+SharedMemoryMpi: SharedMemoryAllocate 1073741824 MMAP anonymous implementation 
+
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|_ |  |  |  |  |  |  |  |  |  |  |  | _|__
+__|_                                    _|__
+__|_   GGGG    RRRR    III    DDDD      _|__
+__|_  G        R   R    I     D   D     _|__
+__|_  G        R   R    I     D    D    _|__
+__|_  G  GG    RRRR     I     D    D    _|__
+__|_  G   G    R  R     I     D   D     _|__
+__|_   GGGG    R   R   III    DDDD      _|__
+__|_                                    _|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+  |  |  |  |  |  |  |  |  |  |  |  |  |  |  
+
+
+Copyright (C) 2015 Peter Boyle, Azusa Yamaguchi, Guido Cossu, Antonin Portelli and other authors
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+Current Grid git commit hash=7d6c8b34a082767756aa171fcf040b3eaf048368: (HEAD -> feature/gpt, origin/feature/gpt, origin/HEAD) clean
+
+Grid : Message : ================================================ 
+Grid : Message : MPI is initialised and logging filters activated 
+Grid : Message : ================================================ 
+Grid : Message : This rank is running on host nid004233 at local time 2026-07-17 09:58:41
+Grid : Message : Requested 1073741824 byte stencil comms buffers 
+Grid : Message : MemoryManager Cache 134217728 bytes 
+Grid : Message : MemoryManager::Init() setting up
+Grid : Message : MemoryManager::Init() cache pool for recent host   allocations: SMALL 8 LARGE 2 HUGE 0
+Grid : Message : MemoryManager::Init() cache pool for recent device allocations: SMALL 16 LARGE 8 Huge 0
+Grid : Message : MemoryManager::Init() cache pool for recent shared allocations: SMALL 16 LARGE 8 Huge 0
+Grid : Message : MemoryManager::Init() Non unified: Caching accelerator data in dedicated memory
+
+=============================================
+              Initialized GPT                
+     Copyright (C) 2020 Christoph Lehner     
+=============================================
+GPT :       1.082427 s : Initializing gpt.random(ampl-cons-0,vectorized_ranlux24_389_64) took 0.000224113 s
+GPT :       1.174761 s : 
+                       : Nambu HMC with smeared-Wilson amplifier G: topological tunneling run
+                       :   lattice = [8, 8, 8, 8]
+                       :   beta    = 6.0
+                       :   c_p     = 0.75, c_r = 1.5, lam = 1.125  (window in s: [0.667, 1.333])
+                       :   rho     = 0.12, n_sm = 2
+                       :   tau     = 2.0, MD steps = 50  (eps = 0.04)
+                       :   ntherm  = 20 (skipped on resume), ntraj = 100
+                       :   nmeas   = 1, tflow = 2.0 (eps_flow = 0.1, radius = 4.00)
+                       :   nsave   = 100, root = /pscratch/sd/e/ell2156/nambu/ampl_tune_cons
+                       :   resume  = fresh start
+                       : 
+GPT :       1.175637 s : Thermalizing 20 trajectories (no accept/reject)
+Traceback (most recent call last):
+  File "/global/cfs/cdirs/mp13/lundstrum/gpt-lundstrum-130726/gpt/Nambu-mech/nambu_ampl_topo_run.py", line 192, in <module>
+    nambu_hmc(tau, accept_reject=False)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/cfs/cdirs/mp13/lundstrum/gpt-lundstrum-130726/gpt/Nambu-mech/nambu_ampl_topo_run.py", line 179, in nambu_hmc
+    mdint(tau)
+    ~~~~~^^^^^
+  File "/pscratch/sd/e/ell2156/gpt-lundstrum-130726/gpt/lib/gpt/algorithms/integrator/symplectic/base.py", line 118, in __call__
+    op[1](step * tau, direction)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pscratch/sd/e/ell2156/gpt-lundstrum-130726/gpt/lib/gpt/algorithms/integrator/euler.py", line 34, in __call__
+    funcs = gpt.core.util.to_list(self.func())
+                                  ~~~~~~~~~^^
+  File "/global/cfs/cdirs/mp13/lundstrum/gpt-lundstrum-130726/gpt/Nambu-mech/nambu_ampl_topo_run.py", line 129, in frc_P
+    F_G = a_Ssm.gradient(U, U)
+  File "/pscratch/sd/e/ell2156/gpt-lundstrum-130726/gpt/lib/gpt/core/group/differentiable_functional.py", line 198, in gradient
+    gradient_transformed = self.t.jacobian(
+        fields_indices, fields_transformed, [gradient_prime[i] for i in indices]
+    )
+  File "/pscratch/sd/e/ell2156/gpt-lundstrum-130726/gpt/lib/gpt/qcd/gauge/smear/stout.py", line 152, in jacobian
+    dst[mu] -= (
+    ...<6 lines>...
+    )
+  File "/pscratch/sd/e/ell2156/gpt-lundstrum-130726/gpt/lib/gpt/core/lattice.py", line 275, in __isub__
+    gpt.expr.stack_eval(self, -expr, ac=True)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/pscratch/sd/e/ell2156/gpt-lundstrum-130726/gpt/lib/gpt/core/expr.py", line 120, in stack_eval
+    return gpt.eval(x, y, ac)
+           ~~~~~~~~^^^^^^^^^^
+  File "/pscratch/sd/e/ell2156/gpt-lundstrum-130726/gpt/lib/gpt/core/expr.py", line 367, in expr_eval
+    dst_i.update(cgpt.eval(dst_i.v_obj, e.val, e.unary, ac, i))
+                 ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+=============================================
+               Finalized GPT                 
+=============================================
+Grid : Message : 42.507728 s : *******************************************
+Grid : Message : 42.508108 s : ******* Grid Finalize                ******
+Grid : Message : 42.508277 s : *******************************************
