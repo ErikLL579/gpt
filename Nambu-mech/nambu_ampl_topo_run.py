@@ -9,7 +9,7 @@
 # dG ~ eps^2.28).
 #
 #   H = sum p^2/2 + sum r^2/2 + S_beta(U)      (Metropolis on H)
-#   G = c_p sum p^2/2 + c_r sum r^2/2 + lam * S_sm(U)
+#   G = gamma sum r_a + c_p sum p^2/2 + c_r sum r^2/2 + lam * S_sm(U)
 #   S_sm = Wilson action at the same beta on n_sm stout-smeared links
 #
 # Per adjoint component the (p,r) pair is a parametric amplifier
@@ -22,9 +22,14 @@
 #   aggressive:   --c_p 0.581 --c_r 1.936 --lam 1.453  (17.4% armed)
 #
 # EOM (update_p convention dst <- dst - eps*frc):
-#   Udot_a = (c_r - c_p) p_a r_a
-#   frc_P  = cw(c_r F_H - lam F_sm, R)
+#   Udot_a = gamma p_a + (c_r - c_p) p_a r_a
+#   frc_P  = gamma F_H + cw(c_r F_H - lam F_sm, R)
 #   frc_R  = cw(lam F_sm - c_p F_H, P)
+# gamma = 0: pure quadratic amplifier (transport tax: prefactor c_r-c_p,
+# Gaussian-product factor 0.64, rotor sign-flips — measured 3x slower t2E
+# motion than HMC at the conservative window, July 17 2026).
+# gamma = 1: "idle + supercharger" — full HMC ballistic velocity for every
+# component, armed components keep the same sqrt(AB) instability on top.
 #
 # The amplifier term enters ONLY through G, so the marginal for U is
 # exactly exp(-S_beta(U)). Wilson-flowed Q and E measured every --nmeas
@@ -42,6 +47,7 @@ from topo_measure import flow_and_measure, measurement_line, latest_checkpoint, 
 # parameters
 beta = g.default.get_float("--beta", 6.0)
 L = g.default.get_int("--L", 8)
+gamma = g.default.get_float("--gamma", 0.0)  # 0 = pure quadratic
 c_p = g.default.get_float("--c_p", 0.75)
 c_r = g.default.get_float("--c_r", 1.5)
 lam = g.default.get_float("--lam", 1.125)
@@ -83,6 +89,7 @@ g.message(
 Nambu HMC with smeared-Wilson amplifier G: topological tunneling run
   lattice = {grid.fdimensions}
   beta    = {beta}
+  gamma   = {gamma}  (linear-in-r idle velocity; 0 = pure quadratic)
   c_p     = {c_p}, c_r = {c_r}, lam = {lam}  (window in s: [{c_p / lam:.3f}, {c_r / lam:.3f}])
   rho     = {rho}, n_sm = {n_sm}
   tau     = {tau}, MD steps = {n_steps}  (eps = {tau / n_steps})
@@ -128,7 +135,7 @@ def frc_P():
     F_H = a_S.gradient(U, U)
     F_G = a_Ssm.gradient(U, U)
     F = [g(c_r * fh - lam * fg) for fh, fg in zip(F_H, F_G)]
-    return cw_list(F, R)
+    return [g(gamma * fh + fr) for fh, fr in zip(F_H, cw_list(F, R))]
 
 
 def frc_R():
@@ -139,7 +146,7 @@ def frc_R():
 
 
 def vel_U():
-    return [g((c_r - c_p) * o) for o in cw_list(P, R)]
+    return [g(gamma * p + (c_r - c_p) * o) for p, o in zip(P, cw_list(P, R))]
 
 
 ip_P = sympl.update_p(P, frc_P, tag="P")

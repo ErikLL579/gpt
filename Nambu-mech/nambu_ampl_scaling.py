@@ -234,8 +234,8 @@ g.message("Test 1 passed")
 g.message("=" * 70)
 g.message("Test 2: |dH|, |dG| vs eps at fixed trajectory length")
 
-n_meas = 3
-steps_list = [5, 10, 20, 40, 80]
+n_meas = 6
+steps_list = [5, 10, 20, 40, 80, 160]
 eps_list = []
 dH_list = []
 dG_list = []
@@ -267,9 +267,10 @@ for n_steps in steps_list:
         f"  N = {n_steps:3d}  eps = {eps:.4f}   |dH| = {dH_list[-1]:.6e}   |dG| = {dG_list[-1]:.6e}"
     )
 
-# fit excludes the coarsest step (outside asymptotic regime)
-slope_H = np.polyfit(np.log(eps_list[1:]), np.log(dH_list[1:]), 1)[0]
-slope_G = np.polyfit(np.log(eps_list[1:]), np.log(dG_list[1:]), 1)[0]
+# fit excludes the two coarsest steps (outside asymptotic regime: the
+# amplifier's Lyapunov growth contaminates coarse-eps trajectories)
+slope_H = np.polyfit(np.log(eps_list[2:]), np.log(dH_list[2:]), 1)[0]
+slope_G = np.polyfit(np.log(eps_list[2:]), np.log(dG_list[2:]), 1)[0]
 g.message(f"  fitted slope: dH ~ eps^{slope_H:.3f}, dG ~ eps^{slope_G:.3f}  (expect 2)")
 assert abs(slope_H - 2.0) < 0.3
 assert abs(slope_G - 2.0) < 0.3

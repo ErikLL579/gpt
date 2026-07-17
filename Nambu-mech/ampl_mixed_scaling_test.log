@@ -45,8 +45,8 @@ Grid : Message : MemoryManager::Init() Unified memory space
               Initialized GPT                
      Copyright (C) 2020 Christoph Lehner     
 =============================================
-GPT :       0.252004 s : Initializing gpt.random(nambu-ampl-test,vectorized_ranlux24_389_64) took 0.000466108 s
-GPT :       0.252061 s : 
+GPT :       0.281811 s : Initializing gpt.random(nambu-ampl-test,vectorized_ranlux24_389_64) took 0.000132084 s
+GPT :       0.281844 s : 
                        : Nambu HMC with smeared-Wilson amplifier G: scaling test
                        :   lattice = [4, 4, 4, 4]
                        :   beta    = 6.0
@@ -55,16 +55,36 @@ GPT :       0.252061 s :
                        :   rho     = 0.12, n_sm = 2
                        :   tau     = 1.0
                        : 
-GPT :       0.266786 s : ======================================================================
-GPT :       0.266815 s : Thermalizing 20 standard HMC trajectories at beta = 6.0
-GPT :       2.885397 s : Thermalized: plaquette = 0.573301
-GPT :       2.885591 s : ======================================================================
-GPT :       2.885614 s : Test 0: smeared-Wilson gradient through the stout chain rule
-GPT :       2.885773 s :   S(U)    = 3932.460060
-GPT :       2.893972 s :   S_sm(U) = 643.771018
-GPT :       2.906491 s : Test that functional is real: 0.0
-GPT :       3.028384 s : Assert gradient error: 7.659507702027818e-11 < 1e-07
-GPT :       3.193518 s :   amplifier window: 9.2% of components have AB > 0, growth rate mean = 0.2802, max = 1.8824 (MD-time units)
-GPT :       3.193558 s : Test 0 passed
-GPT :       3.193564 s : ======================================================================
-GPT :       3.193569 s : Test 1: reversibility of PRURP with amplifier G
+GPT :       0.293716 s : ======================================================================
+GPT :       0.293755 s : Thermalizing 20 standard HMC trajectories at beta = 6.0
+GPT :       3.080821 s : Thermalized: plaquette = 0.573301
+GPT :       3.080996 s : ======================================================================
+GPT :       3.081005 s : Test 0: smeared-Wilson gradient through the stout chain rule
+GPT :       3.081169 s :   S(U)    = 3932.460060
+GPT :       3.089617 s :   S_sm(U) = 643.771018
+GPT :       3.102665 s : Test that functional is real: 0.0
+GPT :       3.232158 s : Assert gradient error: 7.659507702027818e-11 < 1e-07
+GPT :       3.406571 s :   amplifier window: 9.2% of components have AB > 0, growth rate mean = 0.2802, max = 1.8824 (MD-time units)
+GPT :       3.406612 s : Test 0 passed
+GPT :       3.406620 s : ======================================================================
+GPT :       3.406624 s : Test 1: reversibility of PRURP with amplifier G
+GPT :      14.371979 s :   reversibility error: U = 2.84e-15, P = 6.72e-15, R = 4.20e-15
+GPT :      14.372735 s : Test 1 passed
+GPT :      14.372747 s : ======================================================================
+GPT :      14.372752 s : Test 2: |dH|, |dG| vs eps at fixed trajectory length
+GPT :      24.700123 s :   N =   5  eps = 0.2000   |dH| = 1.531228e+02   |dG| = 8.294834e+01
+GPT :      44.334177 s :   N =  10  eps = 0.1000   |dH| = 3.671909e+00   |dG| = 2.065874e+00
+GPT :      83.384164 s :   N =  20  eps = 0.0500   |dH| = 4.432019e-01   |dG| = 4.246711e-01
+GPT :     154.466256 s :   N =  40  eps = 0.0250   |dH| = 1.202927e-01   |dG| = 1.105296e-01
+GPT :     291.273807 s :   N =  80  eps = 0.0125   |dH| = 3.103378e-02   |dG| = 2.805601e-02
+GPT :     564.341511 s :   N = 160  eps = 0.0063   |dH| = 7.818090e-03   |dG| = 7.040307e-03
+GPT :     564.342370 s :   fitted slope: dH ~ eps^1.943, dG ~ eps^1.972  (expect 2)
+GPT :     564.342382 s : Test 2 passed
+GPT :     564.342388 s : ======================================================================
+GPT :     564.342392 s : All tests passed
+=============================================
+               Finalized GPT                 
+=============================================
+Grid : Message : 566.182821 s : *******************************************
+Grid : Message : 566.182828 s : ******* Grid Finalize                ******
+Grid : Message : 566.182831 s : *******************************************
