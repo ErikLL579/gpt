@@ -1,0 +1,303 @@
+SharedMemoryMpi:  World communicator of size 1
+SharedMemoryMpi:  Node  communicator of size 1
+SharedMemoryMpi: SharedMemoryAllocate 1073741824 MMAP anonymous implementation 
+
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|_ |  |  |  |  |  |  |  |  |  |  |  | _|__
+__|_                                    _|__
+__|_   GGGG    RRRR    III    DDDD      _|__
+__|_  G        R   R    I     D   D     _|__
+__|_  G        R   R    I     D    D    _|__
+__|_  G  GG    RRRR     I     D    D    _|__
+__|_  G   G    R  R     I     D   D     _|__
+__|_   GGGG    R   R   III    DDDD      _|__
+__|_                                    _|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+  |  |  |  |  |  |  |  |  |  |  |  |  |  |  
+
+
+Copyright (C) 2015 Peter Boyle, Azusa Yamaguchi, Guido Cossu, Antonin Portelli and other authors
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+Current Grid git commit hash=7d6c8b34a082767756aa171fcf040b3eaf048368: (HEAD -> feature/gpt, origin/feature/gpt, origin/HEAD) clean
+
+Grid : Message : ================================================ 
+Grid : Message : MPI is initialised and logging filters activated 
+Grid : Message : ================================================ 
+Grid : Message : This rank is running on host nid004233 at local time 2026-07-17 09:50:18
+Grid : Message : Requested 1073741824 byte stencil comms buffers 
+Grid : Message : MemoryManager Cache 134217728 bytes 
+Grid : Message : MemoryManager::Init() setting up
+Grid : Message : MemoryManager::Init() cache pool for recent host   allocations: SMALL 8 LARGE 2 HUGE 0
+Grid : Message : MemoryManager::Init() cache pool for recent device allocations: SMALL 16 LARGE 8 Huge 0
+Grid : Message : MemoryManager::Init() cache pool for recent shared allocations: SMALL 16 LARGE 8 Huge 0
+Grid : Message : MemoryManager::Init() Non unified: Caching accelerator data in dedicated memory
+
+=============================================
+              Initialized GPT                
+     Copyright (C) 2020 Christoph Lehner     
+=============================================
+GPT :       0.972126 s : 
+                       : Amplifier-window histogram
+                       :   root    = /pscratch/sd/e/ell2156/nambu/hmc_60, configs = [70000, 71000, 72000]
+                       :   beta    = 6.0
+                       :   c_p     = 0.75, c_r = 1.5, lam = 1.125
+                       :   window in s = F_sm/F_H: (0.667, 1.333)
+                       :   rho     = 0.12, nsm list = [1, 2]
+                       :   tau     = 2.0 (for e-folds per trajectory)
+                       : 
+GPT :       0.972441 s : Config /pscratch/sd/e/ell2156/nambu/hmc_60/ckpoint_lat.70000
+GPT :       0.973445 s : NERSC file format; reading /pscratch/sd/e/ell2156/nambu/hmc_60/ckpoint_lat.70000
+GPT :       0.973709 s :    BEGIN_HEADER
+GPT :       0.973885 s : 	HDR_VERSION = 1.0
+GPT :       0.974058 s : 	DATATYPE = 4D_SU3_GAUGE_3x3
+GPT :       0.974281 s : 	STORAGE_FORMAT =
+GPT :       0.974454 s : 	DIMENSION_1 = 8
+GPT :       0.974684 s : 	DIMENSION_2 = 8
+GPT :       0.974872 s : 	DIMENSION_3 = 8
+GPT :       0.975113 s : 	DIMENSION_4 = 8
+GPT :       0.975277 s : 	LINK_TRACE = 0.003461344005
+GPT :       0.975461 s : 	PLAQUETTE  = 0.5937320608
+GPT :       0.975685 s : 	BOUNDARY_1 = PERIODIC
+GPT :       0.975850 s : 	BOUNDARY_2 = PERIODIC
+GPT :       0.976025 s : 	BOUNDARY_3 = PERIODIC
+GPT :       0.976186 s : 	BOUNDARY_4 = PERIODIC
+GPT :       0.976476 s : 	CHECKSUM =   536eeb21
+GPT :       0.978401 s : 	SCIDAC_CHECKSUMA =          0
+GPT :       0.978641 s : 	SCIDAC_CHECKSUMB =          0
+GPT :       0.978865 s : 	ENSEMBLE_ID = gpt
+GPT :       0.979090 s : 	ENSEMBLE_LABEL =
+GPT :       0.979324 s : 	SEQUENCE_NUMBER = 1
+GPT :       0.979526 s : 	CREATOR = ell2156
+GPT :       0.979714 s : 	CREATOR_HARDWARE = nid004701-x86_64-Linux-6.4.0-150600.23.103_15.0.25-cray_shasta_c
+GPT :       0.979869 s : 	CREATION_DATE = Thu Jul 16 06:20:34 2026 PDT
+GPT :       0.980017 s : 	ARCHIVE_DATE = Thu Jul 16 06:20:34 2026 PDT
+GPT :       0.980188 s : 	FLOATING_POINT = IEEE64BIG
+GPT :       0.980339 s :    END_HEADER
+GPT :       1.083602 s : Read 0.00219727 GB at 0.0214496 GB/s (0.0516789 GB/s for distribution, 0.0366733 GB/s for munged read, 10.7538 GB/s for checksum, 0.182857 GB/s for munging, 1 readers)
+GPT :       1.128662 s :   plaquette = 0.593732
+GPT :       1.375896 s :   nsm = 1: window occupancy = 17.89%  rate mean/max = 0.4392/2.4283  e-folds/traj mean = 0.88  s pct[5,25,50,75,95] = [-2.049, -0.009, 0.374, 0.789, 2.814]
+GPT :       1.585006 s :   nsm = 2: window occupancy = 7.69%  rate mean/max = 0.2459/1.8465  e-folds/traj mean = 0.49  s pct[5,25,50,75,95] = [-1.507, -0.122, 0.122, 0.386, 1.785]
+GPT :       1.585348 s : Config /pscratch/sd/e/ell2156/nambu/hmc_60/ckpoint_lat.71000
+GPT :       1.588273 s : NERSC file format; reading /pscratch/sd/e/ell2156/nambu/hmc_60/ckpoint_lat.71000
+GPT :       1.588480 s :    BEGIN_HEADER
+GPT :       1.588710 s : 	HDR_VERSION = 1.0
+GPT :       1.588981 s : 	DATATYPE = 4D_SU3_GAUGE_3x3
+GPT :       1.589210 s : 	STORAGE_FORMAT =
+GPT :       1.589455 s : 	DIMENSION_1 = 8
+GPT :       1.589678 s : 	DIMENSION_2 = 8
+GPT :       1.589874 s : 	DIMENSION_3 = 8
+GPT :       1.590065 s : 	DIMENSION_4 = 8
+GPT :       1.590276 s : 	LINK_TRACE = -0.0008729606742
+GPT :       1.590454 s : 	PLAQUETTE  = 0.5911003676
+GPT :       1.590625 s : 	BOUNDARY_1 = PERIODIC
+GPT :       1.590826 s : 	BOUNDARY_2 = PERIODIC
+GPT :       1.591041 s : 	BOUNDARY_3 = PERIODIC
+GPT :       1.591207 s : 	BOUNDARY_4 = PERIODIC
+GPT :       1.591372 s : 	CHECKSUM =   7d78841a
+GPT :       1.591549 s : 	SCIDAC_CHECKSUMA =          0
+GPT :       1.591727 s : 	SCIDAC_CHECKSUMB =          0
+GPT :       1.591942 s : 	ENSEMBLE_ID = gpt
+GPT :       1.592101 s : 	ENSEMBLE_LABEL =
+GPT :       1.592258 s : 	SEQUENCE_NUMBER = 1
+GPT :       1.592419 s : 	CREATOR = ell2156
+GPT :       1.592584 s : 	CREATOR_HARDWARE = nid004701-x86_64-Linux-6.4.0-150600.23.103_15.0.25-cray_shasta_c
+GPT :       1.592744 s : 	CREATION_DATE = Thu Jul 16 06:37:30 2026 PDT
+GPT :       1.592910 s : 	ARCHIVE_DATE = Thu Jul 16 06:37:30 2026 PDT
+GPT :       1.593109 s : 	FLOATING_POINT = IEEE64BIG
+GPT :       1.593275 s :    END_HEADER
+GPT :       1.598522 s : Read 0.00219727 GB at 0.449605 GB/s (0.871819 GB/s for distribution, 0.929313 GB/s for munged read, 15.7002 GB/s for checksum, 3.97413 GB/s for munging, 1 readers)
+GPT :       1.599595 s :   plaquette = 0.591100
+GPT :       1.758797 s :   nsm = 1: window occupancy = 17.98%  rate mean/max = 0.4431/2.2387  e-folds/traj mean = 0.89  s pct[5,25,50,75,95] = [-2.029, -0.005, 0.378, 0.799, 2.857]
+GPT :       1.950864 s :   nsm = 2: window occupancy = 7.79%  rate mean/max = 0.2483/1.7399  e-folds/traj mean = 0.50  s pct[5,25,50,75,95] = [-1.505, -0.118, 0.123, 0.393, 1.794]
+GPT :       1.951134 s : Config /pscratch/sd/e/ell2156/nambu/hmc_60/ckpoint_lat.72000
+GPT :       1.952648 s : NERSC file format; reading /pscratch/sd/e/ell2156/nambu/hmc_60/ckpoint_lat.72000
+GPT :       1.952879 s :    BEGIN_HEADER
+GPT :       1.953083 s : 	HDR_VERSION = 1.0
+GPT :       1.953304 s : 	DATATYPE = 4D_SU3_GAUGE_3x3
+GPT :       1.953495 s : 	STORAGE_FORMAT =
+GPT :       1.953680 s : 	DIMENSION_1 = 8
+GPT :       1.953881 s : 	DIMENSION_2 = 8
+GPT :       1.954051 s : 	DIMENSION_3 = 8
+GPT :       1.954216 s : 	DIMENSION_4 = 8
+GPT :       1.954412 s : 	LINK_TRACE = -0.0008005066659
+GPT :       1.954608 s : 	PLAQUETTE  = 0.5962074757
+GPT :       1.954797 s : 	BOUNDARY_1 = PERIODIC
+GPT :       1.954970 s : 	BOUNDARY_2 = PERIODIC
+GPT :       1.955180 s : 	BOUNDARY_3 = PERIODIC
+GPT :       1.955361 s : 	BOUNDARY_4 = PERIODIC
+GPT :       1.955572 s : 	CHECKSUM =   c8565aa0
+GPT :       1.955790 s : 	SCIDAC_CHECKSUMA =          0
+GPT :       1.955951 s : 	SCIDAC_CHECKSUMB =          0
+GPT :       1.956111 s : 	ENSEMBLE_ID = gpt
+GPT :       1.956275 s : 	ENSEMBLE_LABEL =
+GPT :       1.956461 s : 	SEQUENCE_NUMBER = 1
+GPT :       1.956661 s : 	CREATOR = ell2156
+GPT :       1.956836 s : 	CREATOR_HARDWARE = nid004701-x86_64-Linux-6.4.0-150600.23.103_15.0.25-cray_shasta_c
+GPT :       1.956981 s : 	CREATION_DATE = Thu Jul 16 06:54:38 2026 PDT
+GPT :       1.957163 s : 	ARCHIVE_DATE = Thu Jul 16 06:54:38 2026 PDT
+GPT :       1.957347 s : 	FLOATING_POINT = IEEE64BIG
+GPT :       1.957522 s :    END_HEADER
+GPT :       1.961843 s : Read 0.00219727 GB at 0.55478 GB/s (0.995571 GB/s for distribution, 1.25439 GB/s for munged read, 17.8259 GB/s for checksum, 4.99783 GB/s for munging, 1 readers)
+GPT :       1.962834 s :   plaquette = 0.596207
+GPT :       2.147349 s :   nsm = 1: window occupancy = 17.74%  rate mean/max = 0.4378/2.5041  e-folds/traj mean = 0.88  s pct[5,25,50,75,95] = [-1.990, -0.005, 0.371, 0.784, 2.825]
+GPT :       2.323026 s :   nsm = 2: window occupancy = 7.47%  rate mean/max = 0.2374/1.9952  e-folds/traj mean = 0.47  s pct[5,25,50,75,95] = [-1.433, -0.116, 0.118, 0.377, 1.722]
+GPT :       2.323305 s : ======================================================================
+GPT :       2.323575 s : Aggregated over 3 config(s):
+GPT :       2.323857 s :   s-histogram, nsm = 1 (window = [0.667, 1.333]):
+GPT :       2.324116 s :   HIST 1 -0.475    53594  ############################################################
+GPT :       2.324309 s :   HIST 1 -0.425     3031  ###
+GPT :       2.324561 s :   HIST 1 -0.375     3335  ####
+GPT :       2.324775 s :   HIST 1 -0.325     3701  ####
+GPT :       2.324989 s :   HIST 1 -0.275     4220  #####
+GPT :       2.325242 s :   HIST 1 -0.225     4775  #####
+GPT :       2.325430 s :   HIST 1 -0.175     5436  ######
+GPT :       2.325606 s :   HIST 1 -0.125     6204  #######
+GPT :       2.325781 s :   HIST 1 -0.075     6952  ########
+GPT :       2.326004 s :   HIST 1 -0.025     8204  #########
+GPT :       2.326188 s :   HIST 1 +0.025     9451  ###########
+GPT :       2.326413 s :   HIST 1 +0.075    10552  ############
+GPT :       2.326602 s :   HIST 1 +0.125    11772  #############
+GPT :       2.326783 s :   HIST 1 +0.175    13392  ###############
+GPT :       2.326970 s :   HIST 1 +0.225    14191  ################
+GPT :       2.327141 s :   HIST 1 +0.275    15044  #################
+GPT :       2.327290 s :   HIST 1 +0.325    15561  #################
+GPT :       2.327453 s :   HIST 1 +0.375    15110  #################
+GPT :       2.327618 s :   HIST 1 +0.425    14909  #################
+GPT :       2.327767 s :   HIST 1 +0.475    14332  ################
+GPT :       2.327923 s :   HIST 1 +0.525    13072  ###############
+GPT :       2.328079 s :   HIST 1 +0.575    12023  #############
+GPT :       2.328274 s :   HIST 1 +0.625    10921  ############
+GPT :       2.328462 s :   HIST 1 +0.675     9728 |###########
+GPT :       2.328625 s :   HIST 1 +0.725     8900 |##########
+GPT :       2.328810 s :   HIST 1 +0.775     7925 |#########
+GPT :       2.328956 s :   HIST 1 +0.825     7076 |########
+GPT :       2.329167 s :   HIST 1 +0.875     6334 |#######
+GPT :       2.329324 s :   HIST 1 +0.925     5506 |######
+GPT :       2.329463 s :   HIST 1 +0.975     5060 |######
+GPT :       2.329650 s :   HIST 1 +1.025     4571 |#####
+GPT :       2.329801 s :   HIST 1 +1.075     4146 |#####
+GPT :       2.329983 s :   HIST 1 +1.125     3605 |####
+GPT :       2.330153 s :   HIST 1 +1.175     3296 |####
+GPT :       2.330318 s :   HIST 1 +1.225     3000 |###
+GPT :       2.330476 s :   HIST 1 +1.275     2773 |###
+GPT :       2.330646 s :   HIST 1 +1.325     2533 |###
+GPT :       2.330849 s :   HIST 1 +1.375     2282  ###
+GPT :       2.331070 s :   HIST 1 +1.425     2104  ##
+GPT :       2.331240 s :   HIST 1 +1.475     1921  ##
+GPT :       2.331450 s :   HIST 1 +1.525     1750  ##
+GPT :       2.331609 s :   HIST 1 +1.575     1597  ##
+GPT :       2.331764 s :   HIST 1 +1.625     1466  ##
+GPT :       2.331909 s :   HIST 1 +1.675     1409  ##
+GPT :       2.332074 s :   HIST 1 +1.725     1335  #
+GPT :       2.332244 s :   HIST 1 +1.775     1185  #
+GPT :       2.332415 s :   HIST 1 +1.825     1155  #
+GPT :       2.332650 s :   HIST 1 +1.875     1098  #
+GPT :       2.332838 s :   HIST 1 +1.925      975  #
+GPT :       2.333007 s :   HIST 1 +1.975    30704  ##################################
+GPT :       2.333191 s :   s-histogram, nsm = 2 (window = [0.667, 1.333]):
+GPT :       2.333391 s :   HIST 2 -0.475    50861  ############################################################
+GPT :       2.333571 s :   HIST 2 -0.425     4240  #####
+GPT :       2.333726 s :   HIST 2 -0.375     4742  ######
+GPT :       2.333869 s :   HIST 2 -0.325     5608  #######
+GPT :       2.334057 s :   HIST 2 -0.275     6762  ########
+GPT :       2.334258 s :   HIST 2 -0.225     8232  ##########
+GPT :       2.334448 s :   HIST 2 -0.175    10164  ############
+GPT :       2.334618 s :   HIST 2 -0.125    12758  ###############
+GPT :       2.334781 s :   HIST 2 -0.075    15647  ##################
+GPT :       2.334967 s :   HIST 2 -0.025    19224  #######################
+GPT :       2.335135 s :   HIST 2 +0.025    22838  ###########################
+GPT :       2.335298 s :   HIST 2 +0.075    24914  #############################
+GPT :       2.335474 s :   HIST 2 +0.125    25095  ##############################
+GPT :       2.335676 s :   HIST 2 +0.175    23265  ###########################
+GPT :       2.335829 s :   HIST 2 +0.225    20307  ########################
+GPT :       2.336072 s :   HIST 2 +0.275    17095  ####################
+GPT :       2.336259 s :   HIST 2 +0.325    14452  #################
+GPT :       2.336484 s :   HIST 2 +0.375    11919  ##############
+GPT :       2.336663 s :   HIST 2 +0.425    10105  ############
+GPT :       2.336833 s :   HIST 2 +0.475     8250  ##########
+GPT :       2.337005 s :   HIST 2 +0.525     7071  ########
+GPT :       2.337175 s :   HIST 2 +0.575     6063  #######
+GPT :       2.337361 s :   HIST 2 +0.625     5233  ######
+GPT :       2.337537 s :   HIST 2 +0.675     4426 |#####
+GPT :       2.337708 s :   HIST 2 +0.725     3872 |#####
+GPT :       2.337870 s :   HIST 2 +0.775     3398 |####
+GPT :       2.338016 s :   HIST 2 +0.825     2974 |####
+GPT :       2.338182 s :   HIST 2 +0.875     2619 |###
+GPT :       2.338348 s :   HIST 2 +0.925     2321 |###
+GPT :       2.338499 s :   HIST 2 +0.975     2060 |##
+GPT :       2.338648 s :   HIST 2 +1.025     1945 |##
+GPT :       2.338845 s :   HIST 2 +1.075     1684 |##
+GPT :       2.339089 s :   HIST 2 +1.125     1516 |##
+GPT :       2.339253 s :   HIST 2 +1.175     1494 |##
+GPT :       2.339413 s :   HIST 2 +1.225     1350 |##
+GPT :       2.339560 s :   HIST 2 +1.275     1193 |#
+GPT :       2.339741 s :   HIST 2 +1.325     1128 |#
+GPT :       2.339982 s :   HIST 2 +1.375     1045  #
+GPT :       2.340138 s :   HIST 2 +1.425      984  #
+GPT :       2.340319 s :   HIST 2 +1.475      833  #
+GPT :       2.340469 s :   HIST 2 +1.525      832  #
+GPT :       2.340614 s :   HIST 2 +1.575      757  #
+GPT :       2.340820 s :   HIST 2 +1.625      705  #
+GPT :       2.340975 s :   HIST 2 +1.675      701  #
+GPT :       2.341162 s :   HIST 2 +1.725      657  #
+GPT :       2.341307 s :   HIST 2 +1.775      580  #
+GPT :       2.341484 s :   HIST 2 +1.825      551  #
+GPT :       2.341651 s :   HIST 2 +1.875      510  #
+GPT :       2.341831 s :   HIST 2 +1.925      491  #
+GPT :       2.342064 s :   HIST 2 +1.975    17745  #####################
+GPT :       2.346453 s : ======================================================================
+GPT :       2.346672 s : Window scan at nsm = 2, 393216 components, stiffness sqrt(c_p*c_r) = 1.0607 fixed for all rows:
+GPT :       2.346867 s :          window(s)    c_p    c_r    lam  armed%  rate_mean  rate_p90  efolds/traj  total_pwr
+GPT :       2.355581 s :   (0.400, 0.900)  0.707  1.591  1.768  13.74%     0.4261    0.8238         0.85    23013.7
+GPT :       2.359876 s :   (0.400, 1.000)  0.671  1.677  1.677  14.85%     0.4637    0.8996         0.93    27076.5
+GPT :       2.364084 s :   (0.400, 1.100)  0.640  1.759  1.599  15.77%     0.4943    0.9614         0.99    30654.6
+GPT :       2.367317 s :   (0.400, 1.200)  0.612  1.837  1.531  16.54%     0.5198    1.0093         1.04    33802.0
+GPT :       2.370497 s :   (0.400, 1.333)  0.581  1.936  1.453  17.38%     0.5477    1.0664         1.10    37419.8
+GPT :       2.374034 s :   (0.400, 1.500)  0.548  2.054  1.369  18.20%     0.5760    1.1211         1.15    41223.6
+GPT :       2.376703 s :   (0.500, 0.900)  0.791  1.423  1.581   9.07%     0.2806    0.5478         0.56    10003.6
+GPT :       2.379513 s :   (0.500, 1.000)  0.750  1.500  1.500  10.18%     0.3176    0.6209         0.64    12716.6
+GPT :       2.382114 s :   (0.500, 1.100)  0.715  1.573  1.430  11.10%     0.3477    0.6799         0.70    15184.8
+GPT :       2.384870 s :   (0.500, 1.200)  0.685  1.643  1.369  11.87%     0.3729    0.7286         0.75    17405.5
+GPT :       2.387821 s :   (0.500, 1.333)  0.650  1.732  1.299  12.71%     0.4004    0.7834         0.80    20006.0
+GPT :       2.390812 s :   (0.500, 1.500)  0.612  1.837  1.225  13.53%     0.4283    0.8398         0.86    22787.9
+GPT :       2.392980 s :   (0.600, 0.900)  0.866  1.299  1.443   5.73%     0.1770    0.3478         0.35     3986.5
+GPT :       2.395345 s :   (0.600, 1.000)  0.822  1.369  1.369   6.84%     0.2139    0.4201         0.43     5754.1
+GPT :       2.397683 s :   (0.600, 1.100)  0.783  1.436  1.306   7.76%     0.2439    0.4773         0.49     7446.4
+GPT :       2.400024 s :   (0.600, 1.200)  0.750  1.500  1.250   8.53%     0.2689    0.5267         0.54     9020.2
+GPT :       2.402586 s :   (0.600, 1.333)  0.712  1.581  1.186   9.37%     0.2962    0.5808         0.59    10911.6
+GPT :       2.405132 s :   (0.600, 1.500)  0.671  1.677  1.118  10.19%     0.3240    0.6342         0.65    12982.5
+GPT :       2.407070 s :   (0.667, 0.900)  0.913  1.232  1.369   4.00%     0.1247    0.2426         0.25     1960.8
+GPT :       2.409057 s :   (0.667, 1.000)  0.866  1.299  1.299   5.11%     0.1615    0.3161         0.32     3247.3
+GPT :       2.411125 s :   (0.667, 1.100)  0.826  1.362  1.238   6.04%     0.1915    0.3748         0.38     4544.7
+GPT :       2.413266 s :   (0.667, 1.200)  0.791  1.423  1.186   6.80%     0.2165    0.4262         0.43     5789.6
+GPT :       2.415521 s :   (0.667, 1.333)  0.750  1.499  1.125   7.64%     0.2437    0.4790         0.49     7320.7 <-- current
+GPT :       2.422316 s :   (0.667, 1.500)  0.707  1.591  1.060   8.46%     0.2714    0.5324         0.54     9030.5
+GPT :       2.424082 s :   (0.750, 0.900)  0.968  1.162  1.291   2.29%     0.0715    0.1412         0.14      642.8
+GPT :       2.426967 s :   (0.750, 1.000)  0.919  1.225  1.225   3.40%     0.1083    0.2127         0.22     1448.2
+GPT :       2.432523 s :   (0.750, 1.100)  0.876  1.285  1.168   4.32%     0.1383    0.2728         0.28     2351.2
+GPT :       2.434272 s :   (0.750, 1.200)  0.839  1.342  1.118   5.09%     0.1633    0.3235         0.33     3267.8
+GPT :       2.439001 s :   (0.750, 1.333)  0.796  1.414  1.061   5.93%     0.1905    0.3764         0.38     4439.4
+GPT :       2.440916 s :   (0.750, 1.500)  0.750  1.500  1.000   6.75%     0.2181    0.4284         0.44     5789.2
+GPT :       2.442477 s :   (0.850, 1.000)  0.978  1.150  1.150   1.78%     0.0581    0.1143         0.12      406.9
+GPT :       2.444063 s :   (0.850, 1.100)  0.932  1.207  1.097   2.70%     0.0881    0.1744         0.18      936.7
+GPT :       2.445808 s :   (0.850, 1.200)  0.893  1.260  1.050   3.47%     0.1131    0.2234         0.23     1542.7
+GPT :       2.451566 s :   (0.850, 1.333)  0.847  1.328  0.996   4.31%     0.1402    0.2739         0.28     2374.5
+GPT :       2.453453 s :   (0.850, 1.500)  0.798  1.409  0.939   5.13%     0.1678    0.3261         0.34     3384.2
+GPT :       2.453655 s : Done
+=============================================
+               Finalized GPT                 
+=============================================
+Grid : Message : 1.534854 s : *******************************************
+Grid : Message : 1.535077 s : ******* Grid Finalize                ******
+Grid : Message : 1.535296 s : *******************************************
