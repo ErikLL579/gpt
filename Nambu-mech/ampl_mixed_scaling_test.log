@@ -1,0 +1,70 @@
+SharedMemoryNone: SharedMemoryAllocate 1073741824 GPU implementation 
+0SharedMemoryNone:  SharedMemoryNone.cc acceleratorAllocDevice 1073741824bytes at 0x300000000 for comms buffers 
+
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|_ |  |  |  |  |  |  |  |  |  |  |  | _|__
+__|_                                    _|__
+__|_   GGGG    RRRR    III    DDDD      _|__
+__|_  G        R   R    I     D   D     _|__
+__|_  G        R   R    I     D    D    _|__
+__|_  G  GG    RRRR     I     D    D    _|__
+__|_  G   G    R  R     I     D   D     _|__
+__|_   GGGG    R   R   III    DDDD      _|__
+__|_                                    _|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+  |  |  |  |  |  |  |  |  |  |  |  |  |  |  
+
+
+Copyright (C) 2015 Peter Boyle, Azusa Yamaguchi, Guido Cossu, Antonin Portelli and other authors
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+Current Grid git commit hash=e138258129faed5cb12fc0e5bbf829f69c6a2a3d: (HEAD -> feature/gpt, origin/feature/gpt, origin/HEAD) uncommited changes
+
+Grid : Message : ================================================ 
+Grid : Message : MPI is initialised and logging filters activated 
+Grid : Message : ================================================ 
+Grid : Message : This rank is running on host Eriks-MacBook-Pro-7.local
+Grid : Message : Requested 1073741824 byte stencil comms buffers 
+Grid : Message : MemoryManager::Init() setting up
+Grid : Message : MemoryManager::Init() cache pool for recent host   allocations: SMALL 8 LARGE 2 HUGE 0
+Grid : Message : MemoryManager::Init() cache pool for recent device allocations: SMALL 16 LARGE 8 Huge 0
+Grid : Message : MemoryManager::Init() cache pool for recent shared allocations: SMALL 16 LARGE 8 Huge 0
+Grid : Message : MemoryManager::Init() Unified memory space
+
+=============================================
+              Initialized GPT                
+     Copyright (C) 2020 Christoph Lehner     
+=============================================
+GPT :       0.252004 s : Initializing gpt.random(nambu-ampl-test,vectorized_ranlux24_389_64) took 0.000466108 s
+GPT :       0.252061 s : 
+                       : Nambu HMC with smeared-Wilson amplifier G: scaling test
+                       :   lattice = [4, 4, 4, 4]
+                       :   beta    = 6.0
+                       :   gamma   = 1.0  (linear-in-r idle velocity; 0 = pure quadratic)
+                       :   c_p     = 0.75, c_r = 1.5, lam = 1.125  (window: c_p < lam < c_r -> amplifier)
+                       :   rho     = 0.12, n_sm = 2
+                       :   tau     = 1.0
+                       : 
+GPT :       0.266786 s : ======================================================================
+GPT :       0.266815 s : Thermalizing 20 standard HMC trajectories at beta = 6.0
+GPT :       2.885397 s : Thermalized: plaquette = 0.573301
+GPT :       2.885591 s : ======================================================================
+GPT :       2.885614 s : Test 0: smeared-Wilson gradient through the stout chain rule
+GPT :       2.885773 s :   S(U)    = 3932.460060
+GPT :       2.893972 s :   S_sm(U) = 643.771018
+GPT :       2.906491 s : Test that functional is real: 0.0
+GPT :       3.028384 s : Assert gradient error: 7.659507702027818e-11 < 1e-07
+GPT :       3.193518 s :   amplifier window: 9.2% of components have AB > 0, growth rate mean = 0.2802, max = 1.8824 (MD-time units)
+GPT :       3.193558 s : Test 0 passed
+GPT :       3.193564 s : ======================================================================
+GPT :       3.193569 s : Test 1: reversibility of PRURP with amplifier G

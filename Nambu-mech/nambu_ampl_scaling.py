@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 #
 # Nambu HMC with a scale-selective parametric amplifier in G
-# (arXiv:2409.18958 quadratic scheme, g3 = smeared Wilson action).
+# (arXiv:2409.18958 quadratic scheme, g3 = smeared Wilson action),
+# optionally mixed with a linear-in-r term ("idle + supercharger").
 #
 #   H = sum p^2/2 + sum r^2/2 + S_beta(U)
-#   G = c_p sum p^2/2 + c_r sum r^2/2 + lam * S_sm(U)
+#   G = gamma sum r_a + c_p sum p^2/2 + c_r sum r^2/2 + lam * S_sm(U)
 #   S_sm = Wilson action at the same beta evaluated on n_sm stout-smeared
 #          links (rho); gradient through the smearing via
 #          differentiable_functional.transformed + stout jacobian
@@ -21,9 +22,15 @@
 # rho ~ 0 -> rotors. Scale-selective energy concentration.
 #
 # EOM (update_p convention dst <- dst - eps*frc):
-#   Udot_a = (c_r - c_p) p_a r_a
-#   frc_P  = cw(c_r F_H - lam F_sm, R)
+#   Udot_a = gamma p_a + (c_r - c_p) p_a r_a
+#   frc_P  = gamma F_H + cw(c_r F_H - lam F_sm, R)
 #   frc_R  = cw(lam F_sm - c_p F_H, P)
+# gamma = 0 is the pure quadratic amplifier; gamma = 1 restores the full
+# HMC ballistic velocity for every component (removing the p*r transport
+# tax: prefactor c_r-c_p, <|pr|>/<|p|> = 0.64, rotor sign-flips at
+# 2 sqrt|AB|) while the armed components keep the same +-sqrt(AB)
+# hyperbolic instability on top. gamma = 1, lam = 0, c_p = c_r = 0 is
+# exactly standard HMC.
 #
 # Tests: AD gradient check through smearing; window statistics on a
 # thermalized config; reversibility; |dH|, |dG| ~ eps^2.
@@ -34,6 +41,7 @@ import numpy as np
 # parameters
 beta = g.default.get_float("--beta", 6.0)
 L = g.default.get_int("--L", 4)
+gamma = g.default.get_float("--gamma", 0.0)  # 0 = pure quadratic
 c_p = g.default.get_float("--c_p", 0.75)
 c_r = g.default.get_float("--c_r", 1.5)
 lam = g.default.get_float("--lam", 1.125)  # mid-window (c_p+c_r)/2
@@ -51,6 +59,7 @@ g.message(
 Nambu HMC with smeared-Wilson amplifier G: scaling test
   lattice = {grid.fdimensions}
   beta    = {beta}
+  gamma   = {gamma}  (linear-in-r idle velocity; 0 = pure quadratic)
   c_p     = {c_p}, c_r = {c_r}, lam = {lam}  (window: c_p < lam < c_r -> amplifier)
   rho     = {rho}, n_sm = {n_sm}
   tau     = {tau}
@@ -89,12 +98,21 @@ def cw_list(A, B):
     return out
 
 
+# sum_{fields, x, a} of the adjoint coefficients (the linear-in-r term of G)
+def lin_sum(A):
+    s = 0.0
+    for x in A:
+        for c in x.otype.coordinates(x):
+            s += complex(g.sum(c)).real
+    return s
+
+
 def hamiltonian_H():
     return a_kin(P) + a_kin(R) + a_S(U)
 
 
 def hamiltonian_G():
-    return c_p * a_kin(P) + c_r * a_kin(R) + lam * a_Ssm(U)
+    return gamma * lin_sum(R) + c_p * a_kin(P) + c_r * a_kin(R) + lam * a_Ssm(U)
 
 
 # per-component window statistics: fraction of (link, adjoint-index)
@@ -123,7 +141,7 @@ def make_prurp(n_steps):
         F_H = a_S.gradient(U, U)
         F_G = a_Ssm.gradient(U, U)
         F = [g(c_r * fh - lam * fg) for fh, fg in zip(F_H, F_G)]
-        return cw_list(F, R)
+        return [g(gamma * fh + fr) for fh, fr in zip(F_H, cw_list(F, R))]
 
     def frc_R():
         F_H = a_S.gradient(U, U)
@@ -132,7 +150,7 @@ def make_prurp(n_steps):
         return cw_list(F, P)
 
     def vel_U():
-        return [g((c_r - c_p) * o) for o in cw_list(P, R)]
+        return [g(gamma * p + (c_r - c_p) * o) for p, o in zip(P, cw_list(P, R))]
 
     ip_P = sympl.update_p(P, frc_P, tag="P")
     ip_R = sympl.update_p(R, frc_R, tag="R")
