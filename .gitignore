@@ -36,3 +36,4 @@ missing
 coverage.xml
 /docker/play/gpt-packages/*.deb
 *ipynb_checkpoints*
+lib/cgpt/build/
