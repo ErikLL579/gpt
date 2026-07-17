@@ -35,6 +35,7 @@ lam = g.default.get_float("--lam", 1.125)
 rho = g.default.get_float("--rho", 0.12)
 nsm_list = [int(x) for x in g.default.get("--nsmlist", "1,2,3,4").split(",")]
 tau = g.default.get_float("--tau", 2.0)
+scan_nsm = g.default.get_int("--scannsm", 2)
 
 s_lo, s_hi, n_bins = -0.5, 2.0, 50
 
@@ -63,13 +64,21 @@ def components(F):
     return np.concatenate(out)
 
 
+scan_h = []
+scan_f = []
+
+
 def analyze(U, nsm, hist_accum):
     a_Ssm = g.qcd.gauge.action.wilson(beta)
     for _ in range(nsm):
         a_Ssm = a_Ssm.transformed(sm)
 
     h = components(a_S.gradient(U, U))
-    q = lam * components(a_Ssm.gradient(U, U))
+    fsm = components(a_Ssm.gradient(U, U))
+    q = lam * fsm
+    if nsm == scan_nsm:
+        scan_h.append(h)
+        scan_f.append(fsm)
 
     A = c_r * h - q
     B = q - c_p * h
@@ -118,5 +127,45 @@ g.message("=" * 70)
 g.message(f"Aggregated over {len(configs)} config(s):")
 for nsm in nsm_list:
     print_hist(nsm, hists[nsm], edges)
+
+################################################################################
+# window scan: for candidate windows (lo, hi) in s-space, replay the
+# rotor/amplifier classification on the stored force components. Each
+# candidate is realized as c_p = lam*lo, c_r = lam*hi with lam chosen so
+# sqrt(c_p*c_r) is the same for all rows (equal UV-rotor stiffness =
+# equal integrator cost), matched to the reference c_p, c_r flags.
+################################################################################
+if scan_h:
+    h = np.concatenate(scan_h)
+    f = np.concatenate(scan_f)
+    S0 = np.sqrt(c_p * c_r)
+    lo_grid = [0.4, 0.5, 0.6, 0.667, 0.75, 0.85]
+    hi_grid = [0.9, 1.0, 1.1, 1.2, 1.333, 1.5]
+
+    g.message("=" * 70)
+    g.message(
+        f"Window scan at nsm = {scan_nsm}, {len(h)} components, "
+        f"stiffness sqrt(c_p*c_r) = {S0:.4f} fixed for all rows:"
+    )
+    g.message(
+        f"  {'window(s)':>16} {'c_p':>6} {'c_r':>6} {'lam':>6} "
+        f"{'armed%':>7} {'rate_mean':>10} {'rate_p90':>9} {'efolds/traj':>12} {'total_pwr':>10}"
+    )
+    for lo in lo_grid:
+        for hi in hi_grid:
+            if hi < lo + 0.15:
+                continue
+            lam_c = S0 / np.sqrt(lo * hi)
+            AB = lam_c**2 * (hi * h - f) * (f - lo * h)
+            amp = AB > 0
+            if not amp.any():
+                continue
+            rates = np.sqrt(AB[amp])
+            cur = " <-- current" if abs(lo - c_p / lam) < 0.01 and abs(hi - c_r / lam) < 0.01 else ""
+            g.message(
+                f"  ({lo:.3f}, {hi:.3f}) {lam_c * lo:>6.3f} {lam_c * hi:>6.3f} {lam_c:>6.3f} "
+                f"{100 * amp.mean():>6.2f}% {rates.mean():>10.4f} {np.percentile(rates, 90):>9.4f} "
+                f"{tau * rates.mean():>12.2f} {rates.sum():>10.1f}{cur}"
+            )
 
 g.message("Done")
