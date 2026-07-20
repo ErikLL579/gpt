@@ -1,0 +1,89 @@
+SharedMemoryNone: SharedMemoryAllocate 1073741824 GPU implementation 
+0SharedMemoryNone:  SharedMemoryNone.cc acceleratorAllocDevice 1073741824bytes at 0x300000000 for comms buffers 
+
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|_ |  |  |  |  |  |  |  |  |  |  |  | _|__
+__|_                                    _|__
+__|_   GGGG    RRRR    III    DDDD      _|__
+__|_  G        R   R    I     D   D     _|__
+__|_  G        R   R    I     D    D    _|__
+__|_  G  GG    RRRR     I     D    D    _|__
+__|_  G   G    R  R     I     D   D     _|__
+__|_   GGGG    R   R   III    DDDD      _|__
+__|_                                    _|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+  |  |  |  |  |  |  |  |  |  |  |  |  |  |  
+
+
+Copyright (C) 2015 Peter Boyle, Azusa Yamaguchi, Guido Cossu, Antonin Portelli and other authors
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+Current Grid git commit hash=e138258129faed5cb12fc0e5bbf829f69c6a2a3d: (HEAD -> feature/gpt, origin/feature/gpt, origin/HEAD) uncommited changes
+
+Grid : Message : ================================================ 
+Grid : Message : MPI is initialised and logging filters activated 
+Grid : Message : ================================================ 
+Grid : Message : This rank is running on host Eriks-MacBook-Pro-7.local
+Grid : Message : Requested 1073741824 byte stencil comms buffers 
+Grid : Message : MemoryManager::Init() setting up
+Grid : Message : MemoryManager::Init() cache pool for recent host   allocations: SMALL 8 LARGE 2 HUGE 0
+Grid : Message : MemoryManager::Init() cache pool for recent device allocations: SMALL 16 LARGE 8 Huge 0
+Grid : Message : MemoryManager::Init() cache pool for recent shared allocations: SMALL 16 LARGE 8 Huge 0
+Grid : Message : MemoryManager::Init() Unified memory space
+
+=============================================
+              Initialized GPT                
+     Copyright (C) 2020 Christoph Lehner     
+=============================================
+GPT :       0.268975 s : Initializing gpt.random(nambu-disloc-test,vectorized_ranlux24_389_64) took 0.000345945 s
+GPT :       0.269047 s : 
+                       : Nambu HMC with dislocation-gated amplifier G: scaling test
+                       :   lattice = [4, 4, 4, 4]
+                       :   beta    = 6.0
+                       :   gamma   = 1.0  (linear-in-r idle velocity; 1 = HMC idle)
+                       :   c_p     = 0.75, c_r = 1.5, lam = 1.75  (window in s = F_G/F_H: (0.75, 1.5))
+                       :   rho     = 0.12, n_sm1 = 1, n_sm2 = 3
+                       :   tau     = 0.5
+                       : 
+GPT :       0.311024 s : ======================================================================
+GPT :       0.311065 s : Thermalizing 100 standard HMC trajectories at beta = 6.0
+GPT :      22.244188 s : Thermalized: plaquette = 0.596246
+GPT :      22.244434 s : ======================================================================
+GPT :      22.244453 s : Test 0: g3 = lam*D_sm^2 gradient via chain rule through both stout chains
+GPT :      22.863676 s :   Q_sm(1) = +0.008263, Q_sm(3) = -0.002719
+GPT :      22.916232 s :   D_sm = +0.010982, g3 = 2.110718e-04
+GPT :      22.916314 s :   gate: armed = 0.000%, rate mean = 0.0000e+00, |s| p99.9 = 1.293e-02
+GPT :      22.978131 s : Test that functional is real: 0.0
+GPT :      23.607502 s : Assert gradient error: 3.8649208794442266e-10 < 1e-05
+GPT :      23.611728 s : Test 0 passed
+GPT :      23.611774 s : ======================================================================
+GPT :      23.611785 s : Test 1: reversibility of PRURP with dislocation-gated G
+GPT :      44.734222 s :   reversibility error: U = 1.56e-15, P = 3.06e-15, R = 1.71e-15
+GPT :      44.735000 s : Test 1 passed
+GPT :      44.735034 s : ======================================================================
+GPT :      44.735043 s : Test 2: |dH|, |dG| vs eps at fixed trajectory length
+GPT :      59.885648 s :   N =   5  eps = 0.1000   |dH| = 5.740927e+00   |dG| = 3.582687e+00
+GPT :      87.348748 s :   N =  10  eps = 0.0500   |dH| = 7.173559e-01   |dG| = 4.737367e-01
+GPT :     138.720517 s :   N =  20  eps = 0.0250   |dH| = 1.425090e-01   |dG| = 1.008932e-01
+GPT :     239.553075 s :   N =  40  eps = 0.0125   |dH| = 3.399502e-02   |dG| = 2.415602e-02
+GPT :     439.964319 s :   N =  80  eps = 0.0063   |dH| = 8.397438e-03   |dG| = 5.972740e-03
+GPT :     439.965279 s :   fitted slope: dH ~ eps^2.042, dG ~ eps^2.039  (expect 2)
+GPT :     439.965308 s : Test 2 passed
+GPT :     439.965315 s : ======================================================================
+GPT :     439.965320 s : All tests passed
+=============================================
+               Finalized GPT                 
+=============================================
+Grid : Message : 439.717621 s : *******************************************
+Grid : Message : 439.717628 s : ******* Grid Finalize                ******
+Grid : Message : 439.717631 s : *******************************************
