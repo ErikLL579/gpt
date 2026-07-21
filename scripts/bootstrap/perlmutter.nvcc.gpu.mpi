@@ -1,0 +1,114 @@
+#!/bin/bash
+#
+# Perlmutter GPU build (A100 / sm_80), adapted from juwels-booster.nvcc.gpu.mpi.
+# Run from a clean clone (separate from the CPU build tree — the script refuses
+# to reuse an existing dependencies/ dir).
+#
+# nvcc uses the Cray wrapper CC as host compiler (-ccbin CC), which pulls in
+# MPI + GTL (GPU-aware MPI) includes and libs automatically via the modules.
+#
+# If Grid's configure rejects -std=c++17 with this nvcc, drop to -std=c++14
+# (the JUWELS script's choice for the same feature/gpt branch).
+#
+module load PrgEnv-gnu
+module load cudatoolkit
+module load craype-accel-nvidia80
+module load cray-fftw
+module load python
+
+export CRAY_ACCEL_TARGET=nvidia80
+export MPICH_GPU_SUPPORT_ENABLED=1
+
+#
+# Get root directory
+#
+root="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." >/dev/null 2>&1 && pwd )"
+
+#
+# Precompile python
+#
+echo "Compile gpt"
+python3 -m compileall ${root}/lib/gpt
+
+#
+# Create dependencies and download
+#
+dep=${root}/dependencies
+if [ ! -f ${dep}/Grid/build/Grid/libGrid.a ];
+then
+
+        if [ -d ${dep} ];
+        then
+            echo "$dep already exists ; rm -rf $dep before bootstrapping again"
+            exit 1
+        fi
+
+        mkdir -p ${dep}
+        cd ${dep}
+
+        #
+        # Lime
+        #
+        wget https://github.com/usqcd-software/c-lime/tarball/master
+        tar xzf master
+        mv usqcd-software-c-lime* lime
+        rm -f master
+        cd lime
+        ./autogen.sh
+        CC=gcc ./configure --prefix=${dep}/local
+        make -j 16
+        make install
+        cd ..
+
+        #
+        # Grid
+        #
+        git clone https://github.com/lehner/Grid.git
+        cd Grid
+        git checkout feature/gpt
+        ./bootstrap.sh
+        mkdir build
+        cd build
+	../configure \
+	    --enable-unified=no \
+	    --enable-accelerator=cuda \
+	    --enable-alloc-align=4k \
+	    --enable-accelerator-cshift \
+	    --enable-shm=nvlink \
+	    --enable-gparity=no \
+	    --enable-comms=mpi \
+	    --disable-comms-threads \
+	    --enable-simd=GPU \
+	    --enable-gen-simd-width=64 \
+	    --with-fftw=${FFTW_DIR}/.. \
+	    --with-lime=${dep}/local \
+	    MPICXX=CC \
+	    CXX=nvcc \
+	    CXXFLAGS="-ccbin CC -gencode arch=compute_80,code=sm_80 -std=c++17 --cudart shared --compiler-options -fPIC" \
+	    LDFLAGS="--cudart shared --compiler-options -fopenmp"
+
+        cd Grid
+        make -j 16
+fi
+
+if [ ! -f ${root}/lib/cgpt/build/cgpt.so ];
+then
+        #
+        # cgpt
+        #
+        cd ${root}/lib/cgpt
+        ./make ${root}/dependencies/Grid/build 16
+fi
+
+
+echo "To use:"
+echo "source ${root}/lib/cgpt/build/source.sh"
+echo ""
+echo "GPU job template (note the _g account for GPU-node charging):"
+echo "  #SBATCH -A mp13_g"
+echo "  #SBATCH -C gpu"
+echo "  #SBATCH --gpus-per-node=1"
+echo "  module load PrgEnv-gnu cudatoolkit craype-accel-nvidia80 cray-fftw python"
+echo "  export MPICH_GPU_SUPPORT_ENABLED=1"
+echo "  export OMP_NUM_THREADS=16   # 64 cores / 4 GPUs per node"
+echo "  srun -n 1 --cpu-bind=cores python3 <script> ..."
