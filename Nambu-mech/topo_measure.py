@@ -46,3 +46,17 @@ def latest_checkpoint(root, n_max):
 
 def save_checkpoint(root, it, U):
     g.save(f"{root}/ckpoint_lat.{it}", U, g.format.nersc())
+
+
+def load_tau_state(root):
+    path = f"{root}/tau_state.txt"
+    if not os.path.exists(path):
+        return None
+    with open(path) as f:
+        tau, tuning_done = f.read().split()
+    return float(tau), bool(int(tuning_done))
+
+
+def save_tau_state(root, tau, tuning_done):
+    with open(f"{root}/tau_state.txt", "w") as f:
+        f.write(f"{tau} {int(tuning_done)}\n")
