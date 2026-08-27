@@ -73,9 +73,11 @@ class ot_matrix_su_n_base(ot_matrix_color):
         self.mtab = {
             self.__name__: (lambda: self, (1, 0)),
             f"ot_vector_color({Ndim})": (lambda: ot_vector_color(Ndim), (1, 0)),
+            "ot_complex_additive_group": (lambda: self, None),
             "ot_singlet": (lambda: self, None),
         }
         self.rmtab = {
+            "ot_complex_additive_group": (lambda: self, None),
             "ot_singlet": (lambda: self, None),
         }
 
@@ -196,6 +198,9 @@ class ot_matrix_su_n_fundamental_algebra(ot_matrix_su_n_algebra):
 
     def project(self, A, method):
         A @= gpt.qcd.gauge.project.traceless_hermitian(A)
+
+    def cartesian_to_infinitesimal(self, U, dU):
+        return gpt(2j * dU * U)
 
     def generators(self, dt):
         r = []

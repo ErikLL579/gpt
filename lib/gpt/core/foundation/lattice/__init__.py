@@ -20,6 +20,7 @@ import gpt
 import cgpt
 import numpy
 import gpt.core.foundation.lattice.matrix
+from gpt.core.foundation.lattice.cshift_plan import cshift_plan_execute, cshift_plan_add
 
 
 def rank_inner_product(a, b, use_accelerator):
@@ -127,6 +128,10 @@ def identity(src):
 
 def infinitesimal_to_cartesian(src, dsrc):
     return dsrc.otype.infinitesimal_to_cartesian(src, dsrc)
+
+
+def cartesian_to_infinitesimal(src, dsrc):
+    return dsrc.otype.cartesian_to_infinitesimal(src, dsrc)
 
 
 def group_inner_product(left, right):

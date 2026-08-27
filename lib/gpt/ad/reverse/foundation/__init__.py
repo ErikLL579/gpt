@@ -17,7 +17,8 @@
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 import gpt as g
-from gpt.ad.reverse.util import container, get_unary_container
+import numpy as np
+from gpt.ad.reverse.util import container, get_unary_container, get_container
 import gpt.ad.reverse.foundation.matrix
 
 
@@ -115,8 +116,86 @@ def component_simple_map(operator, numpy_operator, extra_params, first, second):
     raise Exception(f"component-wise operator {operator} not implemented in rev-AD")
 
 
+def cartesian_to_infinitesimal(src, dsrc):
+    if gpt.util.is_num(src.value):
+        return dsrc
+    return src.value.otype.cartesian_to_infinitesimal(src, dsrc)
+
+
 def infinitesimal_to_cartesian(src, dsrc):
     return src.value.otype.infinitesimal_to_cartesian(src, dsrc)
+
+
+def cshift_plan_add(self, fields, displacements):
+    indices = {}
+    for d in displacements:
+        indices[d] = self.index
+        self.index += 1
+    self.indices.append(indices)
+    return indices
+
+
+def cshift_plan_execute(self):
+    def _executer(first, second=None):
+        assert second is None
+        ret = []
+        for i, displacements in enumerate(self.displacements):
+            for d in displacements:
+                ret.append(first[i])
+                for dir, disp in enumerate(d):
+                    if disp != 0:
+                        ret[-1] = g.cshift(ret[-1], dir, disp)
+        return ret
+
+    return _executer
+
+
+def astype(x, y):
+    def _forward():
+        return g.astype(g(x.value), y)
+
+    # not allowed to capture z, otherwise have reference loop!
+    def _backward(z):
+        if x.with_gradient:
+            x.gradient += z.gradient
+
+    z_container = x._container.copy()
+    z_container.set_otype(y)
+
+    return g.ad.reverse.node_base(
+        _forward,
+        _backward,
+        (x,),
+        _container=z_container,
+        _tag="astype(" + str(x._container) + "," + str(y) + ")",
+    )
+
+
+def where(first, second, third, fourth):
+    assert fourth is None
+    question = first
+    yes = second
+    no = third
+
+    def _forward():
+        return g.where(question, yes.value, no.value)
+
+    # not allowed to capture z, otherwise have reference loop!
+    def _backward(z):
+        if yes.with_gradient:
+            yes.gradient += g.where(question, z.gradient, g(0 * yes.gradient))
+        if no.with_gradient:
+            no.gradient += g.where(question, g(0 * no.gradient), z.gradient)
+
+    z_container = yes._container
+
+    return g.ad.reverse.node_base(
+        _forward,
+        _backward,
+        (yes, no),
+        _container=z_container,
+        _tag="where(" + str(yes._container) + ")",
+    )
 
 
 def identity(x):

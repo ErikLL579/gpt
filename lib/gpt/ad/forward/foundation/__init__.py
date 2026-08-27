@@ -72,6 +72,10 @@ def identity(sx):
     return g.ad.forward.series({g.ad.forward.infinitesimal({}): idsx}, sx.landau_O)
 
 
+def cartesian_to_infinitesimal(src, dsrc):
+    return dsrc[1].otype.cartesian_to_infinitesimal(src, dsrc)
+
+
 def infinitesimal_to_cartesian(src, dsrc):
     return dsrc[1].otype.infinitesimal_to_cartesian(src, dsrc)
 

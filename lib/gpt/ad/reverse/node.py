@@ -19,6 +19,7 @@
 import gpt as g
 from gpt.ad.reverse.util import (
     get_container,
+    get_unary_container,
     get_mul_container,
     get_div_container,
     convert_container,
@@ -64,7 +65,7 @@ class node_differentiable_functional(g.group.differentiable_functional):
     def __call__(self, fields):
         assert len(fields) == len(self.arguments)
         for i in range(len(fields)):
-            self.arguments[i].value @= fields[i]
+            self.arguments[i].value = fields[i]
         return self.node(with_gradients=False).real
 
     def gradient(self, fields, dfields):
@@ -75,8 +76,7 @@ class node_differentiable_functional(g.group.differentiable_functional):
             self.arguments[i].gradient = None
             self.arguments[i].with_gradient = True
         for i in range(len(fields)):
-            assert fields[i] not in [a.value for a in self.arguments]
-            self.arguments[i].value @= fields[i]
+            self.arguments[i].value = fields[i]
         self.node()
         return [self.arguments[i].gradient for i in indices]
 
@@ -183,6 +183,25 @@ class node_base(base):
 
         return node_base(_forward, _backward, (x, y), _container=z_container, _tag="*")
 
+    def __pow__(x, n):
+        if not isinstance(x, node_base):
+            x = node_base(x, with_gradient=False)
+
+        assert g.util.is_num(n)
+
+        z_container = x._container
+
+        def _forward():
+            return x.value**n
+
+        # not allowed to capture z, otherwise have reference loop!
+        def _backward(z):
+            # z = x**n -> dz = n*x**(n-1) dx
+            if x.with_gradient:
+                x.gradient += z.gradient * n * x.value ** (n - 1)
+
+        return node_base(_forward, _backward, (x,), _container=z_container, _tag="**")
+
     def __rmul__(x, y):
         return node_base.__mul__(y, x)
 
@@ -217,21 +236,22 @@ class node_base(base):
 
         def setter(y, z):
             y[item] = z
+            return y
 
         return x.project(getter, setter)
 
     def project(x, getter, setter):
-        assert False  # for future use
-
         def _forward():
             return getter(x.value)
 
         # not allowed to capture z, otherwise have reference loop!
         def _backward(z):
             if x.with_gradient:
-                x.gradient += z.gradient
+                x.gradient = setter(x.gradient, getter(x.gradient) + z.gradient)
 
-        return node_base(_forward, _backward, (x,))
+        z_container = get_unary_container(x._container, getter)
+
+        return node_base(_forward, _backward, (x,), _container=z_container)
 
     def __add__(x, y):
         if not isinstance(x, node_base):
@@ -376,7 +396,11 @@ class node_base(base):
             return y.real
 
         def setter(y, z):
-            y @= z
+            if g.util.is_num(y):
+                y = z.real
+            else:
+                y @= z.real
+            return y
 
         return self.project(getter, setter)
 

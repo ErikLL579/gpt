@@ -37,24 +37,40 @@ class dft_diffeomorphism(diffeomorphism):
     def __call__(self, fields):
         # ft needs to be callable with a node or a lattice
         res = self.ft(fields)
-        return [g(x) for x in res]
+        for i, x in enumerate(res):
+            if isinstance(x, rad.node_base):
+                continue
+            x.otype = fields[i].otype
+        return res
 
     def jacobian(self, fields, fields_prime, dfields):
         N = len(fields_prime)
         assert len(fields) == N
         assert len(dfields) == N
-        aU_prime = [g(2j * dfields[mu] * fields_prime[mu]) for mu in range(N)]
+        aU_prime = [
+            (
+                g(2j * dfields[mu] * fields_prime[mu])
+                if isinstance(fields_prime[mu], rad.node_base)
+                else g.cartesian_to_infinitesimal(fields_prime[mu], dfields[mu])
+            )
+            for mu in range(N)
+        ]
         for mu in range(N):
             assert_compatible(self.aU[mu].value, fields[mu])
             self.aU[mu].value = fields[mu]
         gradient = [None] * N
         for mu in range(N):
+            # make sure all gradients are reset
+            for nu in range(N):
+                self.aU[nu].zero_gradient()
             self.aUft[mu](initial_gradient=aU_prime[mu])
             for nu in range(N):
                 if gradient[nu] is None:
                     gradient[nu] = self.aU[nu].gradient
                 else:
                     gradient[nu] = g(gradient[nu] + self.aU[nu].gradient)
+                if not isinstance(gradient[nu], rad.node_base):
+                    gradient[nu].otype = dfields[nu].otype
 
         return gradient
 
