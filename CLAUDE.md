@@ -29,8 +29,9 @@ Location: `erik_tests/gauge-fixing-flow/`
 HMC in gauge-fixed variables using GPT's automatic differentiation and `differentiable_field_transformation` infrastructure. The gauge-fixing map and its Jacobian are handled automatically via AD.
 
 **Python scripts:**
-- `Trying_AD.py` — 2D (4x4) gauge-fixed HMC, single transformation layer, no checkerboard masking (commented out). 1000 trajectories.
-- `multi_step_AD.py` — 2D (4x4) gauge-fixed HMC, masking commented out. 1000 trajectories.
+- `gf_local_jacobian.py` / `gf_hmc_local.py` / `dH_scaling.py` — **local-Jacobian port of `Trying_AD.py`** (Aug 27 2026). Same map/beta/tau/nsteps/eps, but the log-det comes from an exact per-site block determinant instead of the global stochastic J†J estimator, so the auxiliary momentum (`mom2`) and both FGCR solves disappear from the log-det path. See "Local Jacobian for the gauge-fixing step" below.
+- `Trying_AD.py` — 2D (4x4) gauge-fixed HMC, single transformation layer, no checkerboard masking (commented out). 1000 trajectories. **This is the working reference the local-Jacobian version was ported from.**
+- `multi_step_AD.py` — byte-identical to `Trying_AD.py` (pure duplicate, despite the differing descriptions here).
 - `Gauge-fixing-FT-code-autodiff.py` — 4D (4^4) version with checkerboard masking code (has issues, see below).
 - `claude_multi_step_AD.py` — 2D (8x8) with working checkerboard masking via group-typed mask trick (see below). 5 trajectories.
 - `AD_multi_step.py` — **Multi-step** 4D (4^4) gauge-fixing HMC with N sequential transformations, Luscher backward recursion for force propagation, configurable checkerboard masking. See below for details.
@@ -357,6 +358,45 @@ Constructs a bilinear form ⟨left | J† | right⟩ as an AD graph, then:
 - `ald.draw(U + mom2, rng)` samples from the action, agrees with direct evaluation to ~1e-8
 - `dft.inverse(Uft)` recovers original config to ~1e-25
 
+## Local (per-site) Jacobians — upstream backport, Aug 27 2026
+
+Christoph added machinery to compute Jacobians of general gauge field transformations **locally** (an exact per-site determinant) instead of **globally** (the stochastic J†J estimator). Backported onto our pre-merge base as a Python-only change so the existing `cgpt.so` keeps working — see "Build Notes / upstream state" below.
+
+**New in `g.qcd.gauge.smear`:**
+- `parallel_transport(U, description)` — general path-based smearing from a list of `(weight, g.path()...)` per direction; a `dft_diffeomorphism`, so `jacobian()` comes for free. Reproduces `stout` exactly (map 2e-33, Jacobian 3e-29).
+- `directional_parallel_transport(U, description_mu, mu, P0, P1)` — one direction, masked, with an **AD-built local Jacobian**: `jacobian_matrix()` assembles the per-site 8×8 adjoint block by reverse-mode AD, `log_det_jacobian()` takes `det`→`log`→`sum`. Matches `local_stout`'s hand-coded analytic log-det to machine precision for all μ and both checkerboards.
+
+**The force.** Upstream shipped only the *value*; `action_log_det_jacobian_gradient` was a stub (debug `print`s, a `sum()` starting on int 0, a stubbed `diagonal_jacobian_gradient`). It is finished here (commit `d8f61c91`) using the same nested reverse-mode AD that `dft_action_log_det_jacobian` already uses for the global case: build `Φ = Σ_μ ⟨left_μ | J right_μ⟩` as a graph in U (`dft_diffeomorphism` over nodes-of-nodes) and differentiate it once more, with `left`/`right` driven by generator basis vectors and `−M⁻¹` instead of random momenta. This gives `∂(−log det J) = −tr[J⁻¹ ∂J]` exactly. Verified against `local_stout`'s analytic force to ~1e-25.
+
+Cost at 8⁴/8 threads: dpt value 0.40 s, force 2.16 s vs `local_stout` 0.024 s / 0.22 s (~10×). Use `local_stout` for the plain stout staple; the point of dpt is that it works for an **arbitrary path set**.
+
+**Deterministic vs stochastic.** The local action takes `(U)` only and has no `.draw()`; repeated evaluations are bit-identical. The `J†J` action takes `(U + mom)`, has `.draw()`, and its value scatters (σ ≈ 65 on a 4⁴ test) because `S = |η|²` depends on the auxiliary field, not on U. Both are **exact** algorithms — the auxiliary field exists only because `det J` of a global non-local operator is not computable; block-diagonality removes the premise, not an approximation.
+
+### Local Jacobian for the gauge-fixing step (`gf_local_jacobian.py`)
+
+The masked gauge-fixing step is `U'_μ(x) = V(x) U_μ(x) V†(x+μ̂)` with `V = exp(−ε P_ah B)` supported on one checkerboard. `V(x)` depends on exactly the `2·nd` links touching x and modifies exactly those same links, and every link has a unique active endpoint ⇒ the links partition into disjoint stars and **J is block diagonal over active sites**, blocks of `(2·nd links) × (ng generators)` = **32×32 in 2D, 64×64 in 4D**. Verified numerically: with the mask, exactly 8 links respond to a one-form probe; unmasked, 15 do.
+
+**Masking is required, not optional** — unmasked, the stars overlap and no local determinant exists.
+
+`directional_parallel_transport` does **not** cover this map (it is one-directional *left* multiplication; this is two-sided and touches all μ with the same V), so `gauge_fixing_step` is a separate class applying the same recipe with the larger block. `g.matrix.det` / `g.matrix.inv` handle `ot_matrix_singlet(32/64)` directly (verified against numpy at n = 4…32) — no new container needed.
+
+**Two traps specific to the multi-site star** (neither appears for `local_stout`/dpt, whose star is a single site):
+- `M` is **not** zero on inactive sites — the `cshift` that gathers the star reaches links of *neighbouring* active stars, leaving a scrambled block with `det ≈ −5e-29`. 32 such sites contributed −2124 to an action whose true value is −1.0995. **Mask M before regularising.**
+- `inv()` of the regularised `M` is the identity on inactive sites, and those entries leak into `right`, where the star carries them back onto `left` in a neighbouring active block. **Mask `Minv` too.**
+
+**Validated:** block vs finite differences 9.3e-12; action 1.099529914633493 vs an independent numpy block determinant 1.09952991; `assert_gradient_error` 2.2e-10; `dH ~ ε²` (per-halving ratio 6.98 → 4.77 → 4.20, last-pair slope 2.07); reversibility 1.7e-30.
+
+**NOT yet validated — the measure.** Every test above probes the *integrator*, not the sampled distribution. A wrong sign or factor in the log-det would still give `dH ~ ε²` and reversibility 1e-30. Worse, **⟨plaquette⟩ cannot see the log-det here**: since `ft` is a gauge transformation and the plaquette is gauge-invariant, `∫dW |det J| e^{−S(W)} f(W) = ∫dU e^{−S(U)} f(U) = ∫dW e^{−S(W)} f(W)` with both normalisations equal to Z — so including or omitting the term gives identical gauge-invariant expectations. Only a gauge-**variant** observable (the link trace) can test it. The strongest available check is a link-trace comparison between this implementation and the existing J†J one on the same map. Also still open: 4D has never been run (everything is nd=2), and there are no equilibrium acceptance/⟨plaq⟩ statistics.
+
+**Cost scaling.** The *sweep count* per force is `n_block = 2·nd·ng` (32 in 2D, 64 in 4D) and is volume-independent — every active site's block is computed in the same field operation. Cost per force ≈ A + B·V with A ≈ 11.6 s of per-sweep Python/graph overhead and B ≈ 2 ms/site of arithmetic, so at 8² the volume-dependent part is ~1% and at 32² still only ~15% (measured: 11.7 → 13.6 s for a 16× volume increase). Crossover around V ≈ 6000 sites, i.e. 4⁴ is overhead-dominated, 8⁴ near the knee, 16⁴ arithmetic-bound (rough — extrapolated from 2D, and in 4D `n_block` doubles while the `Minv` round-trip goes as `n_block²`). Profiled split at 2D 8², 9.87 s/force: 6.41 s for 32 nested-AD gradient calls, 2.03 s rebuilding M, 1.52 s of numpy round-trips. Unoptimised on purpose; the wins all attack A — merge the 32 nested-AD calls into one graph, cache M between action and force, keep `Minv` in lattice form.
+
+### AD / Jacobian gotchas
+
+- **`assert_gradient_error` does not catch a NaN gradient.** It tests `if eps > epsilon_assert`, which is `False` for NaN — so it prints `Assert gradient error: nan` and *passes*. A singular Jacobian block silently produces exactly this. Always read the printed number, don't trust the absence of an exception.
+- **A garbage-collected `differentiable_field_transformation` can corrupt later ones built over the same `U`.** Reproducible: construct/use/drop a dft, then a subsequent dft over the same `U` returns a wrong Jacobian (J collapses to the identity, 8 responding links → 1). Order-dependent, appears once several dfts have existed. It is *not* the `matrix.exp` stencil cache, and `U` itself is undamaged (norm2 and plaquette unchanged). **Keep every dft alive** (`claude_AD_multi_step.py` does, in `dft_list`; `gauge_fixing_step` holds `self.dfm`). Root cause not found.
+- **Forward-mode AD has no `cshift_plan_add`** (upstream too), so `differentiable_field_transformation`'s `J†J` path — which uses `adjoint_jacobian` — cannot run on an `ft` built from `g.parallel_transport`. `ft`s using plain `g.cshift` (all of Erik's) are unaffected.
+- `g.matrix.det`/`inv` **do** work on decomposed `ot_matrix_singlet(n)` for n = 8, 16, 32, 64 (verified against numpy) even though the fundamental sizes are only 4, 10, 30.
+
 ## Checkerboard Masking with AD
 
 Applying a scalar checkerboard mask `fm` (a `g.complex` field) to a matrix field `B` via `B *= fm` changes the otype from `ot_matrix_su_n_fundamental_group(3)` to `ot_matrix_color(3)`. This causes a container mismatch in the AD framework's `__sub__` (which uses strict `==` instead of `accumulate_compatible`).
@@ -386,6 +426,18 @@ See `erik_tests/gauge-fixing-flow/CLAUDE.md` for detailed notes on what was trie
 Local build scripts in `scripts/bootstrap/`:
 - `erikmac` - Erik's Mac build
 - `macos-sequoia.clang.no-mpi` - macOS Sequoia without MPI
+
+### Upstream state (Aug 27 2026)
+
+- **`master`** — pre-merge base + the Python-only local-Jacobian backport (`20da0d73`, `d8f61c91`). Runs on the **existing** `lib/cgpt/build/cgpt.so`; no rebuild needed. Pushed as `myfork/erik-dev`.
+- **`upstream-full-merge`** (`5e3fe68d`) — the complete merge with `origin/master` (`851072d7`), conflicts already resolved. **Does not run**: the merged Python calls `cgpt.lattice_rank_inner_product(a, b, n_block, use_accelerator)` (4 args) against the 3-arg symbol in the built `.so`.
+- **`backup-pre-upstream-merge`** (`d75de651`) — untouched pre-merge snapshot.
+
+**Why the full merge needs a Grid rebuild:** upstream `cgpt` uses `PlannedFFT` and `GridBLAS::inverseBatched`, absent from the Feb-2025 Grid. `dependencies/Grid` has been updated to `lehner/Grid feature/gpt` HEAD (`b11c58b5`) and reconfigured, but **its `build/` was deleted and not rebuilt** — `make -j12` in `dependencies/Grid/build/Grid`, then `./make ../../dependencies/Grid/build 10` from `lib/cgpt`. The existing `cgpt.so` is statically linked and unaffected.
+
+Homebrew python moved 3.13 → 3.14, so the old Grid Makefile's `-F/opt/homebrew/opt/python@3.13/Frameworks -framework Python` link flags are dead — drop them (cgpt links with `-undefined dynamic_lookup`); the reconfigure already did.
+
+Deviations we carry from upstream, both to keep the existing global-Jacobian path (`dft_action_log_det_jacobian`, used by `erik_tests/gauge-fixing-flow`) working: `dft_diffeomorphism.jacobian` keeps the old `2j*dU*U` form for AD-node inputs (upstream's `cartesian_to_infinitesimal` dereferences a not-yet-computed node value and breaks `tests/qcd/gauge.py`), and otype assignment is skipped for node inputs. Upstream independently fixed the NumPy 2.x issues below (using `[0]` / `gpt.util.to_complex`), so our `.item()` patches become obsolete on the full merge; the AD `__mul__` `g.eval(g.adj(...))` fix stays ours.
 
 NumPy 2.x compatibility fix (resolved): NumPy 2.0 deprecated implicit conversion of single-element arrays to scalars via `complex()`/`int()`, raising `TypeError`. Fixed by using `.item()` to extract the scalar first. Affected files:
 - `lib/gpt/core/tensor.py` — `reduced()` and `trace()`: `complex(self.array)` → `complex(self.array.item())`
