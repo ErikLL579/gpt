@@ -28,6 +28,7 @@ class directional_parallel_transport(dft_diffeomorphism):
         self.mu = mu
         self.P0 = P0
         self.P1 = P1
+        self.left_J_right = None
 
         parameter_indices = [
             parameters.index(weight) if weight in parameters else None
@@ -123,80 +124,93 @@ class directional_parallel_transport(dft_diffeomorphism):
     def action_log_det_jacobian(self):
         return dpt_action_log_det_jacobian(self)
 
-    def diagonal_jacobian_gradient(self, fields, fields_prime, left, right):
-
-        # aU_prime_mu = g.cartesian_to_infinitesimal(fields_prime[mu], dfields_mu)
-        # for nu in range(len(fields)):
-        # self.aU[nu].value = fields[nu]
-        # self.aUft[mu](initial_gradient=aU_prime_mu)
-        # self.aU[mu].gradient.otype = dfields_mu.otype
-        # return g(self.aU[mu].gradient * self.P1)
-
-        # Compute \partial_rho left (\partial_U f) right
+    def _left_J_right_functional(self):
+        # Nested reverse-mode AD: build the scalar  sum_mu <left_mu | J right_mu>
+        # as a graph in U, so that differentiating it once more gives
+        # tr[J^-1 dJ] -- the same trick dft_action_log_det_jacobian uses for the
+        # global stochastic log-det, here driven by generator basis vectors
+        # instead of random momenta.
         rad = g.ad.reverse
 
-        mu = self.mu
-        N = len(fields_prime)
-        assert len(fields) == N
-        aU_prime_mu = rad.node(
-            g.cartesian_to_infinitesimal(fields_prime[mu], right), with_gradient=False
-        )
-        aaU = [rad.node(u) for u in self.aU]
+        U0 = [u.value for u in self.aU]
+        n = len(U0)
 
-        for nu in range(len(aaU)):
-            aaU[nu].value.value = fields[nu]
+        _U = [rad.node(g.copy(u)) for u in U0]
+        dfm_node = dft_diffeomorphism(_U, self.ft)
 
-        # for nu in range(len(aaU)):
-        #    aaU[nu].zero_gradient()
+        mom = [g.group.cartesian(u) for u in U0]
+        _left = [rad.node(g.copy(m), with_gradient=False) for m in mom]
+        _right = [rad.node(g.copy(m), with_gradient=False) for m in mom]
 
-        # aaUft = self.ft(aaU)
-        aaUft = aaU
-        aaUft[mu](initial_gradient=aU_prime_mu)
+        _Up = dfm_node(_U)
+        J_right = dfm_node.jacobian(_U, _Up, _right)
 
-        print(aaU[mu].gradient)
-        # for nu in range(len(aaU)):
-        #    aaU[nu].value.zero_gradient()
+        act = None
+        for nu in range(n):
+            term = g.inner_product(_left[nu], J_right[nu])
+            act = term if act is None else g(act + term)
 
-        left = rad.node(left, with_gradient=False)
-        ip = g.inner_product(left, rad.node(self.P1, with_gradient=False) * aaU[mu].gradient)
-        val = ip()
-        print(val)
-
-        return [aaU[nu].value.gradient for nu in range(len(aaU))]
+        return act.functional(*(_U + _left + _right))
 
     def action_log_det_jacobian_gradient(self, fields, dfields):
         # det(J_{ab} + drho_c \partial_{rho_c} J_{ab}) = det(J) (1 + J^-1_{ba} drho_c \partial_{rho_c} J_{ab})
         # -> \partial_{rho_c} det(J) = det(J) J^-1_{ba} \partial_{rho_c} J_{ab}
         # \partial -\log \det(J) = -1/det(J) \partial det(J)
         # Compute tr[\partial_rho (\partial_U f) M]
+        assert list(dfields) == list(fields)
 
-        J = self.jacobian_matrix(fields)
-        Jinv = g.matrix.inv(J)
+        if self.left_J_right is None:
+            self.left_J_right = self._left_J_right_functional()
 
-        fields_prime = self(fields)
+        mu = self.mu
+        n = len(fields)
 
         grid = fields[0].grid
         dt = grid.precision.complex_dtype
         otype = fields[0].otype
         otype_cartesian = otype.cartesian()
         generators = otype_cartesian.generators(dt)
-        right = g.group.cartesian(fields[0])
-        left = g.group.cartesian(fields[0])
+        ng = len(generators)
 
-        Jinv = g.separate_color(Jinv)
+        # <T_a|X> = trace_norm * coordinates_a(X), and jacobian_matrix is built
+        # from coordinates(), so undo that normalization here
+        trace_norm = (generators[0].array @ generators[0].array).trace()
 
-        for a in range(len(generators)):
+        # off-mask sites have J = 0 (the map is the identity there), which would
+        # make the inverse singular; put the identity there instead -- those sites
+        # drop out anyway because left = P1 * T_a vanishes on them
+        M = self.jacobian_matrix(fields)
+        imask = g.complex(grid)
+        imask[:] = 1
+        imask -= self.P1
+        M = g(M + imask * g.identity(M))
+        Minv = g.separate_color(g.matrix.inv(M))
+
+        zero = [g.group.cartesian(fields[i]) for i in range(n)]
+        for z in zero:
+            z[:] = 0
+
+        left = g.group.cartesian(fields[mu])
+        right = g.group.cartesian(fields[mu])
+
+        gradient = None
+        for a in range(ng):
             left @= self.P1 * generators[a]
-            # right = g.where(self.P1, right, g(0*left))
-            right @= sum(-Jinv[b, a] * generators[b] for b in range(len(generators)))
-            gr = self.diagonal_jacobian_gradient(fields, fields_prime, left, right)
-            if a == 0:
-                gr_sum = gr
-            else:
-                for nu in range(len(gr)):
-                    gr_sum[nu] += gr[nu]
 
-        return [gr_sum[fields.index(d)] for d in dfields]
+            right[:] = 0
+            for b in range(ng):
+                right += (-1.0 / trace_norm) * Minv[a, b] * generators[b]
+
+            L = [left if i == mu else zero[i] for i in range(n)]
+            R = [right if i == mu else zero[i] for i in range(n)]
+
+            gr = self.left_J_right.gradient(list(fields) + L + R, fields)
+            if gradient is None:
+                gradient = gr
+            else:
+                gradient = [g(x + y) for x, y in zip(gradient, gr)]
+
+        return [gradient[list(fields).index(d)] for d in dfields]
 
 
 class dpt_action_log_det_jacobian(differentiable_functional):

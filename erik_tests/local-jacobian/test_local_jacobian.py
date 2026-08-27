@@ -13,7 +13,8 @@
 #
 # Test 1: general parallel_transport reproduces stout smearing (map + jacobian)
 # Test 2: directional_parallel_transport reproduces local_stout's hand-coded
-#         analytic local log-det Jacobian, for all mu and both checkerboards
+#         analytic local log-det Jacobian AND its force, for all mu and both
+#         checkerboards; plus a finite-difference check of the force
 #
 import gpt as g
 
@@ -88,16 +89,38 @@ for mu in range(4):
         )
         assert rel < 1e-12
 
+        # and the force
+        a_dpt, a_ls = dpt.action_log_det_jacobian(), ls.action_log_det_jacobian()
+        f_dpt, f_ls = a_dpt.gradient(U, U), a_ls.gradient(U, U)
+        rel = sum(g.norm2(x - y) for x, y in zip(f_dpt, f_ls)) / sum(g.norm2(y) for y in f_ls)
+        g.message(f"  [mu={mu},{cb.__name__}] force vs local_stout: {rel:.3e}")
+        assert rel < 1e-20
+
+g.message("=" * 70)
+g.message("Test 3: finite-difference check of the local log-det force")
+
+dpt = g.qcd.gauge.smear.directional_parallel_transport(
+    U, staple_paths(0, rho), 0, P0=None, P1=even
+)
+dpt.action_log_det_jacobian().assert_gradient_error(rng, U, U, 1e-3, 1e-6)
+
 g.message("=" * 70)
 g.message("All local-Jacobian tests passed")
 
-# NOTE (as of upstream 851072d7): directional_parallel_transport gives the VALUE
-# of the local log-det Jacobian only.  Its force,
+# NOTE on the force: upstream (851072d7) left action_log_det_jacobian_gradient()
+# unfinished -- debug print()s, a sum() starting on int 0, and a stubbed
+# diagonal_jacobian_gradient().  We finished it here along the lines Christoph
+# sketched in his comments, using the same nested reverse-mode AD trick that
+# dft_action_log_det_jacobian already uses for the global stochastic log-det:
+# build <left | J right> as a graph in U and differentiate it once more, with
+# left/right driven by generator basis vectors and -J^-1 instead of random
+# momenta.  Two things had to be handled: the singular off-mask block of J (the
+# map is the identity there, so J = 0; we substitute the identity, and those
+# sites drop out because left = P1*T_a vanishes on them) and the <T_a|X> vs
+# coordinates_a(X) normalization (a factor tr[T_0 T_0]).
 #
-#   dpt.action_log_det_jacobian().gradient(U, U)
-#
-# is unfinished upstream -- action_log_det_jacobian_gradient() still contains
-# debug print()s, a `sum()` that starts on int 0, and a stubbed
-# diagonal_jacobian_gradient() whose forward pass is replaced by `aaUft = aaU`.
-# For HMC in gauge-fixed / smeared variables today, use local_stout, which has
-# both the analytic local log-det and its gradient.
+# Cost at 8^4, 8 threads: dpt value 0.40 s / force 2.16 s versus local_stout
+# 0.024 s / 0.22 s -- roughly 10x, the price of doing 8 AD passes for the
+# adjoint matrix plus 8 nested-AD passes for the force instead of closed-form
+# expressions.  The payoff is that it works for an ARBITRARY path set, not just
+# the stout staple.
