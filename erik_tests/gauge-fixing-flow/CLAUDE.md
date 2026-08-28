@@ -58,7 +58,8 @@ Detail lives in the root `CLAUDE.md` ("Local Jacobian for the gauge-fixing step"
 - The masked step is a gauge transformation with V on one checkerboard; J is block diagonal over active sites, blocks of `(2*nd links) x (ng generators)` = 32x32 in 2D, 64x64 in 4D. Masking is **required** — unmasked the stars overlap and no local determinant exists.
 - Two traps, both fixed: `M` is not zero on inactive sites (the gather `cshift` reaches neighbouring active stars), and `inv()` of the regularised `M` is the identity there. **Mask both `M` and `Minv`.**
 - Validated: block 9.3e-12 vs finite differences, action vs numpy determinant to all printed digits, `assert_gradient_error` 2.2e-10, `dH ~ eps^2`, reversibility 1.7e-30.
-- **Not validated: the measure.** ⟨plaquette⟩ is provably blind to the log-det here (ft is a gauge transformation, plaq is gauge-invariant), so only a gauge-*variant* observable — the link trace — can test it. Best available check: link-trace comparison against the existing J†J implementation on the same map. 4D also untested; everything so far is nd=2.
+- **4D runs unchanged** (Aug 28 2026, `dH_4d_single.py`): 4^4, 64x64 block, one tau=0.25 trajectory gives dH = -0.107 on H ~ 7531 (dS_gauge -47.9 vs dS_mom +47.8). ~67 s per log-det force on 12 threads. The log-det itself moves only 0.03 at eps_gf=1e-2, so raise eps_gf to actually stress it. `dH_scaling_4d.py` is the 4D eps^2 scan, written but not run (~1 h).
+- **Not validated: the measure.** ⟨plaquette⟩ is provably blind to the log-det here (ft is a gauge transformation, plaq is gauge-invariant), so only a gauge-*variant* observable — the link trace — can test it. Best available check: link-trace comparison against the existing J†J implementation on the same map.
 
 ## Files
 - `fourier_kernel.py`, `fourier_hmc.py` — Fourier acceleration kernel (copied from RWGFFA)
