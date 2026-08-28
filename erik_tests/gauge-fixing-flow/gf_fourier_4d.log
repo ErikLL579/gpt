@@ -1,0 +1,71 @@
+SharedMemoryNone: SharedMemoryAllocate 1073741824 GPU implementation 
+0SharedMemoryNone:  SharedMemoryNone.cc acceleratorAllocDevice 1073741824bytes at 0x300000000 for comms buffers 
+
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|_ |  |  |  |  |  |  |  |  |  |  |  | _|__
+__|_                                    _|__
+__|_   GGGG    RRRR    III    DDDD      _|__
+__|_  G        R   R    I     D   D     _|__
+__|_  G        R   R    I     D    D    _|__
+__|_  G  GG    RRRR     I     D    D    _|__
+__|_  G   G    R  R     I     D   D     _|__
+__|_   GGGG    R   R   III    DDDD      _|__
+__|_                                    _|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+  |  |  |  |  |  |  |  |  |  |  |  |  |  |  
+
+
+Copyright (C) 2015 Peter Boyle, Azusa Yamaguchi, Guido Cossu, Antonin Portelli and other authors
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+Current Grid git commit hash=e138258129faed5cb12fc0e5bbf829f69c6a2a3d: (HEAD -> feature/gpt, origin/feature/gpt, origin/HEAD) uncommited changes
+
+Grid : Message : ================================================ 
+Grid : Message : MPI is initialised and logging filters activated 
+Grid : Message : ================================================ 
+Grid : Message : This rank is running on host Eriks-MacBook-Pro-7.local
+Grid : Message : Requested 1073741824 byte stencil comms buffers 
+Grid : Message : MemoryManager::Init() setting up
+Grid : Message : MemoryManager::Init() cache pool for recent host   allocations: SMALL 8 LARGE 2 HUGE 0
+Grid : Message : MemoryManager::Init() cache pool for recent device allocations: SMALL 16 LARGE 8 Huge 0
+Grid : Message : MemoryManager::Init() cache pool for recent shared allocations: SMALL 16 LARGE 8 Huge 0
+Grid : Message : MemoryManager::Init() Unified memory space
+
+=============================================
+              Initialized GPT                
+     Copyright (C) 2020 Christoph Lehner     
+=============================================
+GPT :       0.204540 s : Initializing gpt.random(t,vectorized_ranlux24_389_64) took 0.000431061 s
+GPT :       0.204562 s : nd=4, L=4, beta=10.0, eps_gf=0.01, tau=0.25, nsteps=8
+GPT :       0.204569 s : Fourier kernel: M=1.0, eps_fourier=0.5
+GPT :       0.247945 s : kinetic term: fourier_mass_term(4 x 4)
+GPT :       0.265741 s : block size per active site: 64 x 64
+GPT :       0.279774 s : Test that functional is real: 0.0
+GPT :       0.301581 s : Assert gradient error: 1.3930324468112275e-11 < 1e-08
+GPT :       3.172599 s : pre-thermalised: plaq = 0.779938205387709
+GPT :       3.186006 s :   P[0]: group defect = 8.090e-15
+GPT :       3.186486 s :   P[1]: group defect = 7.923e-15
+GPT :       3.186990 s :   P[2]: group defect = 7.125e-15
+GPT :       3.187460 s :   P[3]: group defect = 6.775e-15
+GPT :       3.193119 s : drawn momenta: fourier KE = 4108.34447084, trivial KE = 7913.74592771
+GPT :      16.245639 s : H0: gauge = 3380.14916524, log-det = 1.07846322, mom = 4108.34447084
+GPT :     643.179913 s : H1: gauge = 3401.80285531, log-det = 1.05519476, mom = 4086.82259653
+GPT :     643.180861 s : dS_gauge = +2.165369e+01, dS_logdet = -2.326847e-02, dS_mom = -2.152187e+01
+GPT :     643.180871 s : dH = +1.085473e-01   [trajectory 613.6 s]
+GPT :     643.181398 s : final plaq = 0.7785284599406309
+=============================================
+               Finalized GPT                 
+=============================================
+Grid : Message : 643.586660 s : *******************************************
+Grid : Message : 643.586710 s : ******* Grid Finalize                ******
+Grid : Message : 643.586730 s : *******************************************
