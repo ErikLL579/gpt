@@ -397,7 +397,8 @@ The masked gauge-fixing step is `U'_μ(x) = V(x) U_μ(x) V†(x+μ̂)` with `V =
 ### AD / Jacobian gotchas
 
 - **`assert_gradient_error` does not catch a NaN gradient.** It tests `if eps > epsilon_assert`, which is `False` for NaN — so it prints `Assert gradient error: nan` and *passes*. A singular Jacobian block silently produces exactly this. Always read the printed number, don't trust the absence of an exception.
-- **A garbage-collected `differentiable_field_transformation` can corrupt later ones built over the same `U`.** Reproducible: construct/use/drop a dft, then a subsequent dft over the same `U` returns a wrong Jacobian (J collapses to the identity, 8 responding links → 1). Order-dependent, appears once several dfts have existed. It is *not* the `matrix.exp` stencil cache, and `U` itself is undamaged (norm2 and plaquette unchanged). **Keep every dft alive** (`claude_AD_multi_step.py` does, in `dft_list`; `gauge_fixing_step` holds `self.dfm`). Root cause not found.
+- ~~**A garbage-collected `differentiable_field_transformation` can corrupt later ones built over the same `U`.**~~ **ROOT-CAUSED Aug 31 2026: this was never about the dft or garbage collection.** The symptom (J collapses to the identity; order-dependent; `U` undamaged) came entirely from the discarded `g.identity(fm_group)` return value described under "Checkerboard Masking with AD" -- the mask was uninitialised memory, so it varied with allocation order and sometimes came back all-zero, making the map the identity. With the mask fixed, three identically-constructed steps in one process and repeated runs of the same script all agree to the last digit (`|gf(W)-W|^2 = 1.33371816e+00` every time). Keeping dfts alive is harmless but unnecessary.
+- **`g.identity(x)` does not modify `x`** -- it returns a new identity lattice (`lib/gpt/core/foundation/lattice/__init__.py:114`). Calling it for its side effect is a silent no-op that leaves `x` holding whatever the allocator handed back.
 - **Forward-mode AD has no `cshift_plan_add`** (upstream too), so `differentiable_field_transformation`'s `J†J` path — which uses `adjoint_jacobian` — cannot run on an `ft` built from `g.parallel_transport`. `ft`s using plain `g.cshift` (all of Erik's) are unaffected.
 - `g.matrix.det`/`inv` **do** work on decomposed `ot_matrix_singlet(n)` for n = 8, 16, 32, 64 (verified against numpy) even though the fundamental sizes are only 4, 10, 30.
 
@@ -407,11 +408,28 @@ Applying a scalar checkerboard mask `fm` (a `g.complex` field) to a matrix field
 
 **Solution — group-typed mask:** Create the mask as a `su_n_fundamental_group(3)` matrix (diagonal: `fm * Identity`), so `group * group = group` preserves the otype:
 ```python
+# g.identity(x) RETURNS a new identity lattice -- it does NOT fill x in place.
+eye = g.identity(g.lattice(grid, g.ot_matrix_su_n_fundamental_group(3)))
 fm_group = g.lattice(grid, g.ot_matrix_su_n_fundamental_group(3))
-g.identity(fm_group)
-fm_group @= fm * fm_group   # @= copies data, preserving fm_group's otype
-B *= fm_group                # group * group = group, otype preserved
+fm_group @= fm * eye        # @= copies data, preserving fm_group's otype
+B *= fm_group               # group * group = group, otype preserved
 ```
+
+**The `g.identity` trap (fixed Aug 31 2026).** The earlier form of this recipe wrote
+`fm_group = g.lattice(...)` / `g.identity(fm_group)` / `fm_group @= fm * fm_group` and
+**discarded `g.identity`'s return value**. `identity()` in
+`lib/gpt/core/foundation/lattice/__init__.py:114` allocates `eye = gpt.lattice(src)`,
+fills *that*, and returns it; `src` is never touched. So `fm_group` was uninitialised
+memory. Measured `|fm_group|^2` (must be exactly `n_active * Nc` = 384 at 4^4):
+`384.00`, `383.88`, `383.83`, `0.00` -- varying between successive constructions in one
+process and between processes with identical seeds. Downstream, three *identical*
+`gauge_fixing_step(U, 1e-2, g.even)` objects gave maps of strength `1.124`, `0.932`,
+`0.932`, and across runs `1.30` / `0.93` / `5.3e-24` -- the last being the identity map,
+i.e. a log-det of exactly 0. Affected `gf_local_jacobian.py`, `claude_multi_step_AD.py`,
+`claude_AD_multi_step.py`; all fixed. **Every masked result predating the fix is void**
+(the machinery validations -- block vs finite differences, log-det vs numpy, gradient
+error, `dH ~ eps^2`, reversibility -- survive, since they check the Jacobian against
+whatever map was actually in force).
 
 **Required framework fix** (`lib/gpt/ad/reverse/node.py`, `__mul__` backward, ~line 178): `g.adj(y.value)` returns a lazy `g.expr`, which fails when `z.gradient` is a node (as happens in nested forward/reverse mode used by `action_log_det_jacobian`). Fix by evaluating the adjoint:
 ```python

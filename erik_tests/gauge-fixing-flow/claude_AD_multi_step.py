@@ -60,9 +60,10 @@ def make_ft(grid, nd, eps, checkerboard=None):
 
         fm = g(fm + 1e-15 * fm_inv)
 
+        # NOTE: g.identity(x) RETURNS a new identity lattice; it does not fill x in place
+        eye = g.identity(g.lattice(grid, g.ot_matrix_su_n_fundamental_group(3)))
         fm_group = g.lattice(grid, g.ot_matrix_su_n_fundamental_group(3))
-        g.identity(fm_group)
-        fm_group @= fm * fm_group
+        fm_group @= fm * eye
 
     def ft(U):
         # Covariant divergence: B = sum_mu (U_mu - U_mu shifted backward)

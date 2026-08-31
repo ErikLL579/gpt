@@ -1,0 +1,67 @@
+SharedMemoryNone: SharedMemoryAllocate 1073741824 GPU implementation 
+0SharedMemoryNone:  SharedMemoryNone.cc acceleratorAllocDevice 1073741824bytes at 0x300000000 for comms buffers 
+
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|_ |  |  |  |  |  |  |  |  |  |  |  | _|__
+__|_                                    _|__
+__|_   GGGG    RRRR    III    DDDD      _|__
+__|_  G        R   R    I     D   D     _|__
+__|_  G        R   R    I     D    D    _|__
+__|_  G  GG    RRRR     I     D    D    _|__
+__|_  G   G    R  R     I     D   D     _|__
+__|_   GGGG    R   R   III    DDDD      _|__
+__|_                                    _|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+__|__|__|__|__|__|__|__|__|__|__|__|__|__|__
+  |  |  |  |  |  |  |  |  |  |  |  |  |  |  
+
+
+Copyright (C) 2015 Peter Boyle, Azusa Yamaguchi, Guido Cossu, Antonin Portelli and other authors
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+Current Grid git commit hash=e138258129faed5cb12fc0e5bbf829f69c6a2a3d: (HEAD -> feature/gpt, origin/feature/gpt, origin/HEAD) uncommited changes
+
+Grid : Message : ================================================ 
+Grid : Message : MPI is initialised and logging filters activated 
+Grid : Message : ================================================ 
+Grid : Message : This rank is running on host Eriks-MacBook-Pro-7.local
+Grid : Message : Requested 1073741824 byte stencil comms buffers 
+Grid : Message : MemoryManager::Init() setting up
+Grid : Message : MemoryManager::Init() cache pool for recent host   allocations: SMALL 8 LARGE 2 HUGE 0
+Grid : Message : MemoryManager::Init() cache pool for recent device allocations: SMALL 16 LARGE 8 Huge 0
+Grid : Message : MemoryManager::Init() cache pool for recent shared allocations: SMALL 16 LARGE 8 Huge 0
+Grid : Message : MemoryManager::Init() Unified memory space
+
+=============================================
+              Initialized GPT                
+     Copyright (C) 2020 Christoph Lehner     
+=============================================
+GPT :       0.110842 s : Initializing gpt.random(t,vectorized_ranlux24_389_64) took 0.000124931 s
+GPT :       0.139838 s : nd=4, L=4, beta=10.0, eps_gf=0.08, tau=0.25, nsteps=8
+GPT :       0.139869 s : pullback = True
+GPT :       0.139877 s : n_gf_steps = 2, checkerboards = ['even', 'odd']
+GPT :       0.139881 s : block size per active site: 64 x 64
+GPT :       3.034136 s : pre-thermalised: plaq = 0.7784724773334882
+GPT :      16.176521 s :   step 0: log-det action = 19.66486332
+GPT :      29.416983 s :   step 1: log-det action = 43.63249024
+GPT :      29.417995 s : plaq along the chain: ['0.77847248', '0.77847248', '0.77847248']
+GPT :      56.112130 s : H0: gauge = 3402.66274816, log-det = 63.29735356 ['19.664863', '43.632490'], mom = 4128.66831399
+GPT :    1353.698387 s : H1: gauge = 3356.69082801, log-det = 59.30753483 ['17.794775', '41.512760'], mom = 4178.51968383
+GPT :    1353.700273 s : dS_gauge = -4.597192e+01, dS_logdet = -3.989819e+00, dS_mom = +4.985137e+01
+GPT :    1353.700284 s : dH = -1.103690e-01   [trajectory 1270.8 s]
+GPT :    1353.700561 s : final plaq = 0.7814654408845967
+=============================================
+               Finalized GPT                 
+=============================================
+Grid : Message : 1353.757216 s : *******************************************
+Grid : Message : 1353.757225 s : ******* Grid Finalize                ******
+Grid : Message : 1353.757228 s : *******************************************

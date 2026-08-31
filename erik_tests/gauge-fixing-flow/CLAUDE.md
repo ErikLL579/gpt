@@ -5,6 +5,8 @@ Implement checkerboard-masked gauge-fixing field transformation using GPT's auto
 
 ## Working Code
 - `gf_local_jacobian.py` + `gf_hmc_local.py` — **local-Jacobian version** of the one-step flow (Aug 27 2026). Exact per-site block determinant instead of the J†J estimator; no `mom2`, no FGCR in the log-det path. `dH_scaling.py` runs the step-size scan. See "Local Jacobian" below.
+- `gf_multistep_4d.py` — **multi-step** 4D local-Jacobian chain (N masked gauge-fixing steps, alternating checkerboards, Luscher backward recursion for the log-det forces; the Wilson force is evaluated on `W` with no chain rule since every step is a gauge transformation). Flags: `--eps_gf --n_gf --tau --nsteps --no_pullback`.
+- `gf_multistep_fourier_4d.py` — the multi-step chain **plus** the Zhao FA kinetic term. Same kernel path as `gf_fourier_4d.py`.
 - `gf_fourier_4d.py` — the same 4D local-Jacobian HMC with the **Zhao Fourier-accelerated kinetic term** (Aug 28 2026). sqrt(D) comes from `fourier_kernel.build_sqrt_fourier_kernel` unchanged; it is fed to GPT's built-in `g.qcd.scalar.action.fourier_mass_term`, which derives D = sqrt(D)^2 and D^-1/2 = inv(sqrt(D)) and supplies draw/energy/velocity. Flags: `--tau --nsteps --M --eps_fourier`.
 - `claude_multi_step_AD.py` — 2D (8x8) with checkerboard masking working. Runs HMC trajectories (overflow on traj 2, likely numerical tuning needed).
 - `Trying_AD.py` — 2D (4x4), masking commented out, 1000 trajectories, runs fine. **The reference the local-Jacobian port was made from.** `multi_step_AD.py` is byte-identical to it (pure duplicate).
@@ -19,11 +21,15 @@ Multiplying `B *= fm` where `fm` is a `g.complex` scalar mask changes the otype 
 ### Fix 1 — Group-typed mask (user code)
 Create the mask as a `su_n_fundamental_group(3)` field (diagonal: `fm * Identity`):
 ```python
+# g.identity(x) RETURNS a new identity lattice -- it does NOT fill x in place
+eye = g.identity(g.lattice(grid, g.ot_matrix_su_n_fundamental_group(3)))
 fm_group = g.lattice(grid, g.ot_matrix_su_n_fundamental_group(3))
-g.identity(fm_group)
-fm_group @= fm * fm_group   # @= copies data, preserving fm_group's otype
-B *= fm_group                # group * group = group, otype preserved
+fm_group @= fm * eye        # @= copies data, preserving fm_group's otype
+B *= fm_group               # group * group = group, otype preserved
 ```
+The earlier form discarded `g.identity`'s return value, leaving `fm_group` uninitialised
+-- see the root `CLAUDE.md` for the full post-mortem. Every masked result predating
+Aug 31 2026 is void.
 
 ### Fix 2 — `node.py` backward pass (framework fix)
 In `lib/gpt/ad/reverse/node.py`, `__mul__` backward (~line 178): `g.adj(y.value)` returns a lazy `g.expr` which fails when `z.gradient` is a node (nested forward/reverse mode in `action_log_det_jacobian`). Fixed with `g.eval()`:
@@ -61,6 +67,17 @@ Detail lives in the root `CLAUDE.md` ("Local Jacobian for the gauge-fixing step"
 - Validated: block 9.3e-12 vs finite differences, action vs numpy determinant to all printed digits, `assert_gradient_error` 2.2e-10, `dH ~ eps^2`, reversibility 1.7e-30.
 - **Fourier-accelerated kinetic term works** (M=1.0, eps_fourier=0.5): tau=0.25 gives dH = +0.109 vs -0.107 for the trivial kinetic term, 614 s vs 608 s. GPT's `fourier_mass_term` is the same construction as `fourier_hmc.py`'s kinetic_energy/velocity/fill_fourier_momenta — `g.adj(fft)` and `g.inv(fft)` are the *same function* in GPT (`lib/gpt/core/coordinates.py`, `adj_mat = inv_mat = mat_backward`) and `scale_unitary**2 == V` — plus a Hermitian symmetrisation of the velocity. Feeding it Erik's sqrt(D) reproduced the closed-form gradient error and drawn KE bit-for-bit, which also confirms `P^L P^L = P^L` numerically.
 - **4D runs unchanged** (Aug 28 2026, `dH_4d_single.py`): 4^4, 64x64 block, one tau=0.25 trajectory gives dH = -0.107 on H ~ 7531 (dS_gauge -47.9 vs dS_mom +47.8). ~67 s per log-det force on 12 threads. The log-det itself moves only 0.03 at eps_gf=1e-2, so raise eps_gf to actually stress it. `dH_scaling_4d.py` is the 4D eps^2 scan, written but not run (~1 h).
+- **Multi-step chain works (Aug 31 2026)**, once the mask bug above was fixed. 4^4, beta=10, `eps_gf=0.08`, N=2 (even/odd), tau=0.25, nsteps=8:
+
+  | run | log-det swing | dH | min(1, e^-dH) |
+  |---|---|---|---|
+  | 1-step, trivial kinetic, eps_gf 0.01 | -0.030 | -0.1072 | 1.00 |
+  | 1-step, FA, eps_gf 0.01 | -0.023 | +0.1085 | 0.90 |
+  | 2-step, trivial kinetic, eps_gf 0.08 | -3.990 | -0.1104 | 1.00 |
+  | 2-step, FA, eps_gf 0.08 | -2.920 | +0.1063 | 0.90 |
+
+  `eps_gf=0.08` is the first value that actually stresses the log-det (it moves ~3-4 units against a gauge action of ~3400, vs 0.03 at `eps_gf=0.01`), so these are the first discriminating tests of the recursion. Both steps contribute comparably (e.g. 15.57 and 43.11). The FA sector reproduces the single-step run bit-for-bit (kinetic gradient error 1.3930324468112275e-11, drawn momenta 4108.34447084 / 7913.74592771), so the chain does not perturb it. ~1240 s/trajectory at 4^4 on 12 threads. Logs: `gf_multistep_4d_eps008.log`, `gf_multistep_fourier_4d.log`.
+- **Still to redo:** the `dH ~ eps^2` and reversibility scans were run with the corrupted mask and must be repeated. The `--no_pullback` control (does dH degrade when `J_k^T F` is dropped?) was launched and killed before it produced a dH.
 - **Not validated: the measure.** ⟨plaquette⟩ is provably blind to the log-det here (ft is a gauge transformation, plaq is gauge-invariant), so only a gauge-*variant* observable — the link trace — can test it. Best available check: link-trace comparison against the existing J†J implementation on the same map.
 
 ## Files
@@ -86,5 +103,6 @@ Detail lives in the root `CLAUDE.md` ("Local Jacobian for the gauge-fixing step"
 - `lib/gpt/ad/reverse/node.py` ~line 178: `g.adj(y.value)` → `g.eval(g.adj(y.value))` in `__mul__` backward (both x and y branches). Still ours to carry; upstream has not applied it.
 
 ## Gotchas
-- **Keep every `differentiable_field_transformation` alive.** A GC'd dft can corrupt subsequent ones built over the same `U` (J collapses to the identity). Order-dependent, not root-caused. `claude_AD_multi_step.py` is safe (they live in `dft_list`).
+- ~~**Keep every `differentiable_field_transformation` alive.**~~ Root-caused Aug 31 2026: the "GC'd dft corrupts later ones" symptom was the discarded `g.identity(fm_group)` return value (uninitialised mask), not the dft. Fixed; keeping dfts alive is harmless but unnecessary.
+- **`g.identity(x)` returns a new lattice and does not touch `x`.** Calling it for its side effect is a silent no-op.
 - **`assert_gradient_error` does not catch a NaN gradient** — `if eps > epsilon_assert` is `False` for NaN, so it prints `nan` and passes.

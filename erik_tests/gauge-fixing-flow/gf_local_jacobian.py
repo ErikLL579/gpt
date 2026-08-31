@@ -46,9 +46,11 @@ class gauge_fixing_step:
         self.iP -= P
 
         # group-typed mask, so that group * group keeps the otype through AD
+        # NOTE: g.identity(x) RETURNS a new identity lattice, it does not fill x
+        # in place -- discarding the return value leaves fm_group uninitialised.
+        eye = g.identity(g.lattice(grid, self.otype))
         fm_group = g.lattice(grid, self.otype)
-        g.identity(fm_group)
-        fm_group @= P * fm_group
+        fm_group @= P * eye
 
         def ft(xU):
             B = xU[0] - g.cshift(xU[0], 0, -1)
